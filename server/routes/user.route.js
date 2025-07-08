@@ -1,6 +1,8 @@
 import express from "express"
 import auth from "../middleware/auth.js";
 import { login, me, signup, updateUser } from "../controllers/user.controller.js";
+
+// User routes for authentication and user management
 const userRouter = express.Router();
 
 userRouter.post("/signup" , signup);
