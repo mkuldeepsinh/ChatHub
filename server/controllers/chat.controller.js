@@ -13,7 +13,7 @@ export const createChat = async (req, res) => {
         // Check if chat already exists
         const existingChat = await Chat.findOne({
             isGroup: false,
-            users: { $all: [currentUserId, receiverId], $size: 2 },
+            users: { $all: [userId, receiverId], $size: 2 },
         })
             .populate("users", "-password")
             .populate({
@@ -71,7 +71,7 @@ export const getUserChats = async (req, res) => {
 // create a group chat
 export const createGroupChat = async (req, res) => {
     try {
-      const currentUserId = req.user.userId;
+      const currentUserId = req.user._id;
       const { userIds, groupName } = req.body;
   
       if (!userIds || userIds.length < 2 || !groupName) {
@@ -79,7 +79,8 @@ export const createGroupChat = async (req, res) => {
           message: "Group name and at least 2 users are required",
         });
       }
-  
+    //   console.log(userIds);
+    //   console.log(currentUserId);
       const allUsers = [...userIds, currentUserId];
   
       const newGroup = await Chat.create({
@@ -122,5 +123,5 @@ export const createGroupChat = async (req, res) => {
   };
 
 
-  
+
 

@@ -2,10 +2,10 @@ import Msg from "../models/msg.model.js";
 import { Chat } from "../models/chat.model.js";
 
 // create msg 
-export const createMsg = async(req , res)=>{
+export const sendMessage = async(req , res)=>{
     try{
         const { chatId, content, messageType, mediaUrl } = req.body;
-        const senderId = req.user.userId;
+        const senderId = req.user._id;
 
         if (!chatId) {
             return res.status(400).json({ message: "Chat ID is required" });
@@ -69,9 +69,10 @@ export const getMessages = async (req, res) => {
 // mark message as read
 export const markAsRead = async (req, res) => {
     try {
-      const userId = req.user.userId;
+      const userId = req.user._id;
       const { messageIds } = req.body; 
-  
+        
+      console.log(userId);
       await Msg.updateMany(
         { _id: { $in: messageIds }, readBy: { $ne: userId } },
         { $push: { readBy: userId } }
