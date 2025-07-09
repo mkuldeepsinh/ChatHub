@@ -11,7 +11,7 @@ import { Chat } from "./models/chat.model.js";
 import { User } from "./models/user.model.js";
 import { sendMessage, markAsRead } from "./controllers/msg.controller.js";
 import mongoose from "mongoose";
-
+import cors from "cors";
 
 dotenv.config();
 dbConnect();
@@ -20,13 +20,11 @@ dbConnect();
 const app = express();
 app.use(express.json());
 
-// // Middleware for CORS
-// app.use((req, res, next) => {
-//     res.setHeader("Access-Control-Allow-Origin", "*");
-//     res.setHeader("Allow-Methods", "GET, POST, PUT, DELETE");
-//     res.setHeader("Allow-Headers", "Content-Type, Authorization");
-//     next();
-// })
+app.use(cors({
+    origin: "*",
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization", "token"]
+}));
 app.use("/api/v1/user" , userRouter);
 app.use("/api/v1/chats" , chatRouter);
 app.use("/api/v1/message" , msgRouter);
@@ -41,6 +39,40 @@ const io = new SocketIOServer(server, {
         methods: ["GET", "POST" , "PUT" , "DELETE"]
     }
 });
+
+// Map to track chatId -> Set of socketIds
+const chatRoomMap = new Map();
+
+// Helper: Remove socket from all chats
+function removeSocketFromAllChats(socketId) {
+  for (const [chatId, socketSet] of chatRoomMap.entries()) {
+    socketSet.delete(socketId);
+    if (socketSet.size === 0) {
+      chatRoomMap.delete(chatId);
+    }
+  }
+}
+
+// Helper: Emit to all sockets in a chat
+function emitToChat(chatId, event, data) {
+  if (chatRoomMap.has(chatId)) {
+    for (const socketId of chatRoomMap.get(chatId)) {
+      const s = io.sockets.sockets.get(socketId);
+      if (s) s.emit(event, data);
+    }
+  }
+}
+
+// Helper: Delete chat room (call when chat is deleted)
+function deleteChatRoom(chatId) {
+  if (chatRoomMap.has(chatId)) {
+    for (const socketId of chatRoomMap.get(chatId)) {
+      const s = io.sockets.sockets.get(socketId);
+      if (s) s.leave(chatId);
+    }
+    chatRoomMap.delete(chatId);
+  }
+}
 
 // Listen for client connections
 io.on("connection", async (socket) => {
@@ -81,6 +113,9 @@ io.on("connection", async (socket) => {
             const chat = await Chat.findById(chatId);
             if (chat && chat.users.some(u => u.toString() === user._id.toString())) {
                 socket.join(chatId);
+                // Add socket.id to chatRoomMap
+                if (!chatRoomMap.has(chatId)) chatRoomMap.set(chatId, new Set());
+                chatRoomMap.get(chatId).add(socket.id);
                 socket.emit("joined_chat", chatId);
                 console.log(`User ${user.username} joined chat ${chatId}`);
             } else {
@@ -95,6 +130,12 @@ io.on("connection", async (socket) => {
     socket.on("leave_chat", (chatId) => {
         if (chatId) {
             socket.leave(chatId);
+            if (chatRoomMap.has(chatId)) {
+                chatRoomMap.get(chatId).delete(socket.id);
+                if (chatRoomMap.get(chatId).size === 0) {
+                    chatRoomMap.delete(chatId);
+                }
+            }
             socket.emit("left_chat", chatId);
         } else {
             socket.emit("error", "No chatId provided");
@@ -123,7 +164,8 @@ io.on("connection", async (socket) => {
                 },
                 json: (result) => {
                     if (this.statusCode === 201) {
-                        io.to(data.chatId).emit("new_message", result);
+                        // Use emitToChat to send to all sockets in the chat
+                        emitToChat(data.chatId, "new_message", result);
                     } else {
                         socket.emit("error", result.message || "Failed to send message");
                     }
@@ -158,7 +200,7 @@ io.on("connection", async (socket) => {
                 },
                 json: (result) => {
                     if (this.statusCode === 200) {
-                        io.to(chatId).emit("messages_read", { messageIds, userId: socket.user._id });
+                        emitToChat(chatId, "messages_read", { messageIds, userId: socket.user._id });
                     } else {
                         socket.emit("error", result.message || "Failed to mark as read");
                     }
@@ -173,6 +215,7 @@ io.on("connection", async (socket) => {
     // --- DISCONNECT ---
     socket.on("disconnect", async () => {
         try {
+            removeSocketFromAllChats(socket.id);
             if (user) {
                 user.isOnline = false;
                 user.lastSeen = new Date();
