@@ -37,7 +37,7 @@ export const signup = async (req, res) => {
         });
         
     } catch (e) {
-        console.error("Register error:", err);
+        console.error("Register error:", e);
         res.status(500).json({ message: "Internal server error" });
     }
 }
@@ -65,7 +65,7 @@ export const login = async (req, res) => {
             token
         });
     } catch (e) {
-        console.error("Login error:", err);
+        console.error("Login error:", e);
         res.status(500).json({ message: "Internal server error" });
     }
 }
@@ -76,7 +76,7 @@ export const me = async(req , res) =>{
         const user = req.user;
         res.status(200).json(user);
     }catch(e){
-        console.error("me error:", err);
+        console.error("me error:", e);
         res.status(500).json({ message: "Internal server error" });
     }
 }
