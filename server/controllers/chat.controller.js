@@ -101,6 +101,41 @@ export const createGroupChat = async (req, res) => {
     }
   };
 
+  // delete chat
+  export const deleteChat = async (req, res) => {
+    try {
+      const { chatId } = req.params;
+  
+      await Chat.findByIdAndDelete(chatId);
+  
+      res.status(200).json({ message: "Chat deleted successfully" });
+    } catch (err) {
+      console.error("deleteChat error:", err);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  };
+
+  // edit group name remove user from grouo add user in group
+  export const updateGroup = async (req, res) => {
+    try {
+      const { chatId } = req.params;
+      const { groupName, users } = req.body;
+  
+      const updatedChat = await Chat.findByIdAndUpdate(
+        chatId,
+        { groupName, users },
+        { new: true }
+      )
+        .populate("users", "-password")
+        .populate("groupAdmin", "-password");
+  
+      res.status(200).json(updatedChat);
+    } catch (err) {
+      console.error("updateGroup error:", err);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  };
+
   //search chat by username and grop name;
   export const searchChat = async (req, res) => {
     try {

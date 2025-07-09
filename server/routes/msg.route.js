@@ -7,6 +7,7 @@ import {
 import auth from "../middleware/auth.js";
 
 const msgRouter = express.Router();
+// Message routes
 msgRouter.use(auth);
 msgRouter.post("/send", sendMessage);
 msgRouter.get("/:chatId", getMessages);
