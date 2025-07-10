@@ -44,7 +44,7 @@ export const sendMessage = async(req , res)=>{
           res.status(201).json(populatedMsg);
 
     }catch(e){
-        console.error("sendMessage error:", err);
+        console.error("sendMessage error:", e);
         res.status(500).json({ message: "Internal server error" });
     }
 }

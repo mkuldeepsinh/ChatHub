@@ -38,8 +38,9 @@ const server = http.createServer(app);
 // Initialize Socket.IO server
 const io = new SocketIOServer(server, {
     cors: {
-        origin: "*", // Allow all origins for development; restrict in production
-        methods: ["GET", "POST" , "PUT" , "DELETE"]
+        origin: "http://localhost:5173", // <-- MUST MATCH YOUR FRONTEND
+        credentials: true,               // <-- ADD THIS LINE
+        methods: ["GET", "POST", "PUT", "DELETE"]
     }
 });
 
@@ -79,8 +80,10 @@ function deleteChatRoom(chatId) {
 
 // Listen for client connections
 io.on("connection", async (socket) => {
-    // --- AUTHENTICATION ---
+    console.log("[SOCKET.IO] New connection attempt", socket.id, socket.handshake.auth);
     const token = socket.handshake.auth?.token || socket.handshake.query?.token;
+    console.log("[SOCKET.IO] Token received:", token);
+    // --- AUTHENTICATION ---
     if (!token) {
         socket.emit("error", "No token provided");
         socket.disconnect(true);
@@ -99,7 +102,7 @@ io.on("connection", async (socket) => {
         socket.disconnect(true);
         return;
     }
-    console.log(`User connected: ${user.username} (${socket.id})`);
+    console.log(`[SOCKET.IO] User connected: ${user.username} (${socket.id})`);
 
     // --- JOIN CHAT ROOMS ---
     socket.on("join_chat", async (chatId) => {
@@ -147,6 +150,7 @@ io.on("connection", async (socket) => {
 
     // --- SEND MESSAGE ---
     socket.on("send_message", async (data) => {
+        console.log("[SOCKET.IO] send_message event received", data, "from", socket.user?.username);
         try {
             if (!data || typeof data !== "object") {
                 socket.emit("error", "Invalid message data");
@@ -165,7 +169,7 @@ io.on("connection", async (socket) => {
                     this.statusCode = code;
                     return this;
                 },
-                json: (result) => {
+                json: function(result) {
                     if (this.statusCode === 201) {
                         // Use emitToChat to send to all sockets in the chat
                         emitToChat(data.chatId, "new_message", result);
@@ -224,7 +228,7 @@ io.on("connection", async (socket) => {
                 user.lastSeen = new Date();
                 await user.save();
             }
-            console.log(`User disconnected: ${user?.username} (${socket.id})`);
+            console.log(`[SOCKET.IO] User disconnected: ${user?.username} (${socket.id})`);
         } catch (err) {
             // Ignore disconnect errors
         }

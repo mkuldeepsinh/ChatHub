@@ -61,11 +61,11 @@ export const login = async (req, res) => {
         //create token
         const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
         
-        // Set token in HTTP-only cookie
+        // Set token in cookie (not httpOnly for dev, not secure for localhost)
         res.cookie('token', token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production', // Use secure in production
-            sameSite: 'strict',
+            httpOnly: false, // <--- must be false for frontend JS to read it!
+            secure: false,   // <--- must be false for localhost (no https)
+            sameSite: 'lax', // or 'strict'
             maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
             path: '/'
         });
