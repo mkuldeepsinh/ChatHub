@@ -59,13 +59,48 @@ export const login = async (req, res) => {
         }
 
         //create token
-        const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET);
+        const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+        
+        // Set token in HTTP-only cookie
+        res.cookie('token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production', // Use secure in production
+            sameSite: 'strict',
+            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+            path: '/'
+        });
+
         res.status(200).json({ 
             message: "Login successful",
-            token
+            user: {
+                _id: user._id,
+                username: user.username,
+                email: user.email,
+                phone: user.phone,
+                profilePicture: user.profilePicture,
+                about: user.about,
+                isOnline: user.isOnline
+            }
         });
     } catch (e) {
         console.error("Login error:", e);
+        res.status(500).json({ message: "Internal server error" });
+    }
+}
+
+export const logout = async (req, res) => {
+    try {
+        // Clear the JWT cookie
+        res.clearCookie('token', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            path: '/'
+        });
+        
+        res.status(200).json({ message: "Logged out successfully" });
+    } catch (e) {
+        console.error("Logout error:", e);
         res.status(500).json({ message: "Internal server error" });
     }
 }

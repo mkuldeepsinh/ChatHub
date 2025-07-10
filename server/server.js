@@ -12,6 +12,7 @@ import { User } from "./models/user.model.js";
 import { sendMessage, markAsRead } from "./controllers/msg.controller.js";
 import mongoose from "mongoose";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 
 dotenv.config();
 dbConnect();
@@ -19,9 +20,11 @@ dbConnect();
 // Initialize Express app
 const app = express();
 app.use(express.json());
+app.use(cookieParser());
 
 app.use(cors({
-    origin: "*",
+    origin: "http://localhost:5173", // Frontend URL
+    credentials: true, // Allow cookies
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization", "token"]
 }));
