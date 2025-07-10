@@ -8,6 +8,7 @@ import Signup from './components/Auth/Signup';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import { FiSend, FiPaperclip, FiArrowLeft } from 'react-icons/fi';
+import { ChatProvider } from './contexts/ChatContext';
 
 // Protected Route Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -37,36 +38,15 @@ const mockMessages = [
   { id: 3, sender: 'Alice', text: 'I am good, thanks! What about you?', time: '09:12', isMe: false },
   { id: 4, sender: 'Me', text: 'Doing great! Ready for our meeting?', time: '09:13', isMe: true },
   { id: 5, sender: 'Alice', text: 'Absolutely! See you soon.', time: '09:14', isMe: false },
-  { id: 5, sender: 'Alice', text: 'Absolutely! See you soon.', time: '09:14', isMe: false },
-  { id: 5, sender: 'Alice', text: 'Absolutely! See you soon.', time: '09:14', isMe: false },
-  { id: 5, sender: 'Alice', text: 'Absolutely! See you soon.', time: '09:14', isMe: false },
-  { id: 5, sender: 'Alice', text: 'Absolutely! See you soon.', time: '09:14', isMe: false },
-  { id: 5, sender: 'Alice', text: 'Absolutely! See you soon.', time: '09:14', isMe: false },
-  { id: 5, sender: 'Alice', text: 'Absolutely! See you soon.', time: '09:14', isMe: false },
-  { id: 5, sender: 'Alice', text: 'Absolutely! See you soon.', time: '09:14', isMe: false },
-  { id: 5, sender: 'Alice', text: 'Absolutely! See you soon.', time: '09:14', isMe: false },
-  { id: 5, sender: 'Alice', text: 'Absolutely! See you soon.', time: '09:14', isMe: false },
-  { id: 5, sender: 'Alice', text: 'Absolutely! See you soon.', time: '09:14', isMe: false },
-  { id: 5, sender: 'Alice', text: 'Absolutely! See you soon.', time: '09:14', isMe: false },
-  { id: 5, sender: 'Alice', text: 'Absolutely! See you soon.', time: '09:14', isMe: false },
-  { id: 5, sender: 'Alice', text: 'Absolutely! See you soon.', time: '09:14', isMe: false },
-  { id: 5, sender: 'Alice', text: 'Absolutely! See you soon.', time: '09:14', isMe: false },
-  { id: 5, sender: 'Alice', text: 'Absolutely! See you soon.', time: '09:14', isMe: false },
-  { id: 5, sender: 'Alice', text: 'Absolutely! See you soon.', time: '09:14', isMe: false },
-  { id: 5, sender: 'Alice', text: 'Absolutely! See you soon.', time: '09:14', isMe: false },
-  { id: 5, sender: 'Alice', text: 'Absolutely! See you soon.', time: '09:14', isMe: false },
-  { id: 5, sender: 'Alice', text: 'Absolutely! See you soon.', time: '09:14', isMe: false },
-  { id: 5, sender: 'Alice', text: 'Absolutely! See you soon.', time: '09:14', isMe: false },
-  { id: 5, sender: 'Alice', text: 'Absolutely! See you soon.', time: '09:14', isMe: false },
-  { id: 5, sender: 'Alice', text: 'Absolutely! See you soon.', time: '09:14', isMe: false },
+ 
 ];
 
 // Chat Page Component (placeholder for now)
 const ChatPage: React.FC = () => {
-  const [selectedChatId, setSelectedChatId] = useState<number | null>(null);
+  const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
 
   // Handler for selecting a chat (mock)
-  const handleSelectChat = (id: number) => setSelectedChatId(id);
+  const handleSelectChat = (id: string) => setSelectedChatId(id);
   const handleBack = () => setSelectedChatId(null);
 
   // Sidebar with click handler for mobile
@@ -78,7 +58,7 @@ const ChatPage: React.FC = () => {
 
   // Chat interface with back button for mobile
   const chatInterface = (
-    <div className="flex-1 flex flex-col h-[calc(100vh-5rem)] bg-gray-800 overflow-hidden">
+    <div className="flex-1 flex flex-col h-[calc(100vh-5rem)] bg-gray-800 overflow-hidden rounded-2xl">
       {/* Back button for mobile */}
       <div className="md:hidden flex items-center p-3 bg-gray-900">
         <button onClick={handleBack} className="mr-2 p-2 rounded-full hover:bg-gray-800 transition">
@@ -93,7 +73,7 @@ const ChatPage: React.FC = () => {
         </div>
       </div>
       {/* Messages area */}
-      <div className="flex-1 overflow-y-auto space-y-4">
+      <div className="flex-1 overflow-y-auto space-y-4 m-2">
         {mockMessages.map((msg) => (
           <div
             key={msg.id}
@@ -113,7 +93,7 @@ const ChatPage: React.FC = () => {
         ))}
       </div>
       {/* Input area */}
-      <div className="bg-gray-900 flex items-center space-x-2 px-2 py-2">
+      <div className="bg-gray-900 flex items-center space-x-2 px-2 py-2 rounded-b-2xl">
         <button className="p-2 rounded-full hover:bg-gray-800 transition" disabled>
           <FiPaperclip size={22} className="text-gray-400" />
         </button>
@@ -131,7 +111,7 @@ const ChatPage: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen h-screen bg-black overflow-hidden">
+    <div className="min-h-screen h-screen bg-gray-900 overflow-hidden">
       <Navbar />
       <div className="flex h-full">
         {/* Sidebar: always visible on md+, only if no chat selected on mobile */}
@@ -146,23 +126,25 @@ const ChatPage: React.FC = () => {
 function App() {
   return (
     <AuthProvider>
-      <Router>
-        <div className="min-h-screen bg-gray-50">
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route 
-              path="/chat" 
-              element={
-                <ProtectedRoute>
-                  <ChatPage />
-                </ProtectedRoute>
-              } 
-            />
-            <Route path="/" element={<Navigate to="/login" replace />} />
-          </Routes>
-        </div>
-      </Router>
+      <ChatProvider>
+        <Router>
+          <div className="min-h-screen bg-gray-50">
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
+              <Route 
+                path="/chat" 
+                element={
+                  <ProtectedRoute>
+                    <ChatPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route path="/" element={<Navigate to="/login" replace />} />
+            </Routes>
+          </div>
+        </Router>
+      </ChatProvider>
     </AuthProvider>
   );
 }

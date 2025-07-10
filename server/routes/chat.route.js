@@ -8,7 +8,7 @@ const chatRouter = express.Router();
 chatRouter.use(auth); // Apply authentication middleware to all routes
 
 chatRouter.post("/create"  , createChat);
-chatRouter.get("/get"  , getUserChats);
+chatRouter.get("/getChats"  , getUserChats);
 chatRouter.get("/search"  , searchChat);
 chatRouter.post("/createGroup"  , createGroupChat);
 chatRouter.delete("/delete/:chatId"  , deleteChat);

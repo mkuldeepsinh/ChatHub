@@ -32,7 +32,6 @@ export const authAPI = {
   },
 
   logout: async () => {
-    // Clear the HTTP-only cookie by setting it to expire
     await api.post('/user/logout');
   },
 
@@ -55,12 +54,32 @@ export const authAPI = {
 // Chat API functions
 export const chatAPI = {
   getChats: async () => {
-    const response = await api.get('/chats');
+    const response = await api.get('/chats/getChats');
     return response.data;
   },
 
-  createChat: async (userId: string) => {
-    const response = await api.post('/chats', { userId });
+  createChat: async (receiverId: string) => {
+    const response = await api.post('/chats/create', { receiverId });
+    return response.data;
+  },
+
+  createGroup: async (groupData: any) => {
+    const response = await api.post('/chats/createGroup', groupData);
+    return response.data;
+  },
+
+  searchChats: async (query: string) => {
+    const response = await api.get(`/chats/search?query=${encodeURIComponent(query)}`);
+    return response.data;
+  },
+
+  deleteChat: async (chatId: string) => {
+    const response = await api.delete(`/chats/delete/${chatId}`);
+    return response.data;
+  },
+
+  updateGroup: async (chatId: string, groupData: any) => {
+    const response = await api.put(`/chats/update/${chatId}`, groupData);
     return response.data;
   },
 
@@ -69,8 +88,13 @@ export const chatAPI = {
     return response.data;
   },
 
-  sendMessage: async (chatId: string, content: string) => {
-    const response = await api.post('/message', { chatId, content });
+  sendMessage: async (chatId: string, content: string, messageType: string = 'text', mediaUrl?: string) => {
+    const response = await api.post('/message/send', { chatId, content, messageType, mediaUrl });
+    return response.data;
+  },
+
+  markAsRead: async (chatId: string) => {
+    const response = await api.put('/message/read', { chatId });
     return response.data;
   }
 };
