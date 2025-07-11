@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { FiSearch, FiUser, FiPlus, FiUsers } from 'react-icons/fi';
 import NewChatModal from './NewChatModal';
+import NewGroupModal from './NewGroupModal';
 import { useChatContext } from '../contexts/ChatContext';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -13,6 +14,7 @@ const Navbar: React.FC<NavbarProps> = ({ onChatCreated, onSelectChat }) => {
   const { chats } = useChatContext();
   const { user } = useAuth();
   const [showNewChat, setShowNewChat] = useState(false);
+  const [showNewGroup, setShowNewGroup] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showResults, setShowResults] = useState(false);
   const filteredChats = searchQuery.trim()
@@ -99,7 +101,9 @@ const Navbar: React.FC<NavbarProps> = ({ onChatCreated, onSelectChat }) => {
               <FiPlus size={20} />
               <span className="hidden md:inline">New Chat</span>
             </button>
-            <button className="flex items-center space-x-2 bg-gray-800 text-white rounded-xl py-2 px-3 md:px-4 hover:bg-gray-700 transition font-medium shadow">
+            <button className="flex items-center space-x-2 bg-gray-800 text-white rounded-xl py-2 px-3 md:px-4 hover:bg-gray-700 transition font-medium shadow"
+              onClick={() => setShowNewGroup(true)}
+            >
               <FiUsers size={20} />
               <span className="hidden md:inline">New Group</span>
             </button>
@@ -119,6 +123,11 @@ const Navbar: React.FC<NavbarProps> = ({ onChatCreated, onSelectChat }) => {
         open={showNewChat}
         onClose={() => setShowNewChat(false)}
         onChatCreated={onChatCreated || (() => {})}
+      />
+      <NewGroupModal
+        open={showNewGroup}
+        onClose={() => setShowNewGroup(false)}
+        onGroupCreated={onSelectChat}
       />
     </>
   );

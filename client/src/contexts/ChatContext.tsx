@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useMemo } from 'react';
 import type { ReactNode } from 'react';
 import { chatAPI } from '../utils/api';
 import { useAuth } from './AuthContext';
@@ -80,17 +80,19 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (user) refreshChats();
   }, [user]);
 
+  const contextValue = useMemo(() => ({
+    chats,
+    loading,
+    refreshChats,
+    addOrUpdateChat,
+    unreadChats,
+    markChatAsRead,
+    currentOpenChatId,
+    setCurrentOpenChatId
+  }), [chats, loading, unreadChats, currentOpenChatId]);
+
   return (
-    <ChatContext.Provider value={{
-      chats,
-      loading,
-      refreshChats,
-      addOrUpdateChat,
-      unreadChats,
-      markChatAsRead,
-      currentOpenChatId,
-      setCurrentOpenChatId
-    }}>
+    <ChatContext.Provider value={contextValue}>
       {children}
     </ChatContext.Provider>
   );

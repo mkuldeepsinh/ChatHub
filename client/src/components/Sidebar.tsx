@@ -20,26 +20,27 @@ const Sidebar: React.FC<SidebarProps> = ({ onSelectChat, selectedChatId }) => {
           <div className="text-center text-gray-400 py-8">No chats found.</div>
         ) : (
           chats.map((chat) => {
-            const receiver = !chat.isGroup
+            const receiver = !chat.isGroup && Array.isArray(chat.users)
               ? chat.users.find((u: any) => u._id !== user?._id)
               : null;
+            const displayName = chat.isGroup
+              ? chat.groupName
+              : receiver?.username || "Unknown User";
             return (
               <div
-                key={chat._id}
+                key={chat._id || chat.id || Math.random()}
                 className={`flex items-center space-x-3 p-3 mb-2 rounded-xl cursor-pointer transition-all duration-200 hover:bg-gray-800 ${
                   selectedChatId === chat._id ? 'bg-gray-800' : ''
                 }`}
                 onClick={() => onSelectChat && onSelectChat(chat._id)}
               >
                 <div className="w-12 h-12 bg-gradient-to-br from-gray-700 to-gray-800 rounded-full flex items-center justify-center text-lg font-bold">
-                  {chat.isGroup
-                    ? (chat.groupName?.[0]?.toUpperCase() || 'G')
-                    : (receiver?.username?.[0]?.toUpperCase() || 'U')}
+                  {displayName[0]?.toUpperCase() || (chat.isGroup ? 'G' : 'U')}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between items-center">
                     <span className="font-semibold truncate">
-                      {chat.isGroup ? chat.groupName : receiver?.username}
+                      {displayName}
                     </span>
                     <span className="text-xs text-gray-400 ml-2 whitespace-nowrap">
                       {chat.latestMessage?.createdAt

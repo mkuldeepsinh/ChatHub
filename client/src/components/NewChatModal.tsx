@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { authAPI, chatAPI } from '../utils/api';
+import { useChatContext } from '../contexts/ChatContext';
 
 interface NewChatModalProps {
   open: boolean;
@@ -14,6 +15,7 @@ const NewChatModal: React.FC<NewChatModalProps> = ({ open, onClose, onChatCreate
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
+  const { addOrUpdateChat } = useChatContext();
 
   const handleSearch = async (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value);
@@ -39,7 +41,9 @@ const NewChatModal: React.FC<NewChatModalProps> = ({ open, onClose, onChatCreate
     setError('');
     setInfo('');
     try {
-      const chat = await chatAPI.createChat(userId);
+      const response = await chatAPI.createChat(userId);
+      const chat = response.chat || response; // Use the chat object, not the whole response
+      addOrUpdateChat(chat);
       onChatCreated(chat._id);
       onClose();
     } catch (err: any) {
@@ -47,6 +51,7 @@ const NewChatModal: React.FC<NewChatModalProps> = ({ open, onClose, onChatCreate
       const data = err?.response?.data;
       if (data && (data.chat || data.chatId)) {
         setInfo('Chat already exists, opening chat...');
+        if (data.chat) addOrUpdateChat(data.chat); // update if chat object is present
         onChatCreated(data.chat?._id || data.chatId);
         setTimeout(onClose, 800);
       } else if (data && data.message) {
