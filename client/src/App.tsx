@@ -10,6 +10,7 @@ import Sidebar from './components/Sidebar';
 import { ChatProvider, useChatContext } from './contexts/ChatContext';
 import ChatWindow from './components/ChatWindow';
 import { SocketProvider } from './contexts/SocketContext';
+import { FiArrowLeft } from 'react-icons/fi';
 
 // Protected Route Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -44,7 +45,9 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 
 // Chat Page Component (placeholder for now)
 const ChatPage: React.FC<{ onChatCreated: (id: string) => void; selectedChatId: string | null; setSelectedChatId: (id: string) => void; onSelectChat: (id: string) => void }> = ({ onChatCreated, selectedChatId, setSelectedChatId, onSelectChat }) => {
-  const { setCurrentOpenChatId } = useChatContext();
+  const { setCurrentOpenChatId, chats } = useChatContext();
+  const { user } = useAuth();
+
   // Handler for selecting a chat
   const handleSelectChat = (id: string) => {
     setSelectedChatId(id);
@@ -55,6 +58,18 @@ const ChatPage: React.FC<{ onChatCreated: (id: string) => void; selectedChatId: 
     setCurrentOpenChatId(selectedChatId);
   }, [selectedChatId, setCurrentOpenChatId]);
 
+  // Find the selected chat and receiver/group name
+  const selectedChat = chats.find((c) => c._id === selectedChatId);
+  let displayName = '';
+  if (selectedChat) {
+    if (selectedChat.isGroup) {
+      displayName = selectedChat.groupName;
+    } else if (Array.isArray(selectedChat.users)) {
+      const receiver = selectedChat.users.find((u: any) => u._id !== user?._id);
+      displayName = receiver?.username || 'Unknown User';
+    }
+  }
+
   // Sidebar with click handler for mobile
   const sidebar = (
     <div className="h-full">
@@ -63,12 +78,34 @@ const ChatPage: React.FC<{ onChatCreated: (id: string) => void; selectedChatId: 
   );
 
   // Chat interface with back button for mobile
-  const chatInterface = selectedChatId ? <ChatWindow chatId={selectedChatId} /> : null;
+  const chatInterface = selectedChatId ? (
+    <div className="flex flex-col flex-1 h-full">
+      {/* Top bar for mobile */}
+      <div className="md:hidden flex items-center bg-gray-900 px-4 py-3 border-b border-gray-800">
+        <button
+          className="mr-3 text-white"
+          onClick={() => setSelectedChatId("")}
+        >
+          <FiArrowLeft size={24} />
+        </button>
+        <span className="font-semibold text-lg text-white truncate">{displayName}</span>
+      </div>
+      <div className="flex-1 flex">
+        <ChatWindow chatId={selectedChatId} />
+      </div>
+    </div>
+  ) : null;
 
   return (
     <div className="flex h-full bg-gray-900 overflow-hidden">
-      <div className={`h-full w-full md:w-72 ${selectedChatId !== null ? 'hidden' : 'block'} md:block`}>{sidebar}</div>
-      <div className={`flex-1 h-full ${selectedChatId === null ? 'hidden' : 'flex'} md:flex`}>{chatInterface}</div>
+      {/* Sidebar: show on md+ or when no chat is selected */}
+      <div className={`h-full w-full md:w-72 ${selectedChatId ? 'hidden' : 'block'} md:block`}>
+        {sidebar}
+      </div>
+      {/* Chat: show on md+ or when a chat is selected */}
+      <div className={`flex-1 h-full ${!selectedChatId ? 'hidden' : 'flex'} md:flex`}>
+        {chatInterface}
+      </div>
     </div>
   );
 };
