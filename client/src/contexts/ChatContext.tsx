@@ -8,6 +8,10 @@ interface ChatContextType {
   loading: boolean;
   refreshChats: () => Promise<void>;
   addOrUpdateChat: (chat: any) => void;
+  unreadChats: Record<string, boolean>;
+  markChatAsRead: (chatId: string) => void;
+  currentOpenChatId: string | null;
+  setCurrentOpenChatId: (id: string | null) => void;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -22,6 +26,16 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const { user } = useAuth();
   const [chats, setChats] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [unreadChats, setUnreadChats] = useState<Record<string, boolean>>({});
+  const [currentOpenChatId, setCurrentOpenChatId] = useState<string | null>(null);
+
+  const markChatAsRead = (chatId: string) => {
+    setUnreadChats((prev) => {
+      const copy = { ...prev };
+      delete copy[chatId];
+      return copy;
+    });
+  };
 
   // Fetch and sort chats
   const refreshChats = async () => {
@@ -67,7 +81,16 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [user]);
 
   return (
-    <ChatContext.Provider value={{ chats, loading, refreshChats, addOrUpdateChat }}>
+    <ChatContext.Provider value={{
+      chats,
+      loading,
+      refreshChats,
+      addOrUpdateChat,
+      unreadChats,
+      markChatAsRead,
+      currentOpenChatId,
+      setCurrentOpenChatId
+    }}>
       {children}
     </ChatContext.Provider>
   );

@@ -7,7 +7,7 @@ import Login from './components/Auth/Login';
 import Signup from './components/Auth/Signup';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
-import { ChatProvider } from './contexts/ChatContext';
+import { ChatProvider, useChatContext } from './contexts/ChatContext';
 import ChatWindow from './components/ChatWindow';
 import { SocketProvider } from './contexts/SocketContext';
 
@@ -33,22 +33,27 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   return <>{children}</>;
 };
 
-const mockMessages = [
-  { id: 1, sender: 'Alice', text: 'Hey there! 👋', time: '09:10', isMe: false },
-  { id: 2, sender: 'Me', text: 'Hi Alice! How are you?', time: '09:11', isMe: true },
-  { id: 3, sender: 'Alice', text: 'I am good, thanks! What about you?', time: '09:12', isMe: false },
-  { id: 4, sender: 'Me', text: 'Doing great! Ready for our meeting?', time: '09:13', isMe: true },
-  { id: 5, sender: 'Alice', text: 'Absolutely! See you soon.', time: '09:14', isMe: false },
+// const mockMessages = [
+//   { id: 1, sender: 'Alice', text: 'Hey there! 👋', time: '09:10', isMe: false },
+//   { id: 2, sender: 'Me', text: 'Hi Alice! How are you?', time: '09:11', isMe: true },
+//   { id: 3, sender: 'Alice', text: 'I am good, thanks! What about you?', time: '09:12', isMe: false },
+//   { id: 4, sender: 'Me', text: 'Doing great! Ready for our meeting?', time: '09:13', isMe: true },
+//   { id: 5, sender: 'Alice', text: 'Absolutely! See you soon.', time: '09:14', isMe: false },
  
-];
+// ];
 
 // Chat Page Component (placeholder for now)
-const ChatPage: React.FC = () => {
-  const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
-
-  // Handler for selecting a chat (mock)
-  const handleSelectChat = (id: string) => setSelectedChatId(id);
-  // const handleBack = () => setSelectedChatId(null);
+const ChatPage: React.FC<{ onChatCreated: (id: string) => void; selectedChatId: string | null; setSelectedChatId: (id: string) => void; onSelectChat: (id: string) => void }> = ({ onChatCreated, selectedChatId, setSelectedChatId, onSelectChat }) => {
+  const { setCurrentOpenChatId } = useChatContext();
+  // Handler for selecting a chat
+  const handleSelectChat = (id: string) => {
+    setSelectedChatId(id);
+    setCurrentOpenChatId(id);
+    if (onSelectChat) onSelectChat(id);
+  };
+  React.useEffect(() => {
+    setCurrentOpenChatId(selectedChatId);
+  }, [selectedChatId, setCurrentOpenChatId]);
 
   // Sidebar with click handler for mobile
   const sidebar = (
@@ -71,10 +76,13 @@ const ChatPage: React.FC = () => {
 const AppRoutes = () => {
   const location = useLocation();
   const hideNavbar = location.pathname === '/login' || location.pathname === '/signup';
+  const [selectedChatId, setSelectedChatId] = React.useState<string | null>(null);
+  const handleChatCreated = (chatId: string) => setSelectedChatId(chatId);
+  const handleSelectChat = (chatId: string) => setSelectedChatId(chatId);
   return (
     <ChatProvider>
       <SocketProvider>
-        {!hideNavbar && <Navbar />}
+        {!hideNavbar && <Navbar onChatCreated={handleChatCreated} onSelectChat={handleSelectChat} />}
         <div className="flex-1 bg-gray-50 overflow-hidden">
           <Routes>
             <Route path="/login" element={<Login />} />
@@ -83,7 +91,7 @@ const AppRoutes = () => {
               path="/chat" 
               element={
                 <ProtectedRoute>
-                  <ChatPage />
+                  <ChatPage onChatCreated={handleChatCreated} selectedChatId={selectedChatId} setSelectedChatId={setSelectedChatId} onSelectChat={handleSelectChat} />
                 </ProtectedRoute>
               } 
             />
