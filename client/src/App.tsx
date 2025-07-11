@@ -80,18 +80,8 @@ const ChatPage: React.FC<{ onChatCreated: (id: string) => void; selectedChatId: 
   // Chat interface with back button for mobile
   const chatInterface = selectedChatId ? (
     <div className="flex flex-col flex-1 h-full">
-      {/* Top bar for mobile */}
-      <div className="md:hidden flex items-center bg-gray-900 px-4 py-3 border-b border-gray-800">
-        <button
-          className="mr-3 text-white"
-          onClick={() => setSelectedChatId("")}
-        >
-          <FiArrowLeft size={24} />
-        </button>
-        <span className="font-semibold text-lg text-white truncate">{displayName}</span>
-      </div>
       <div className="flex-1 flex">
-        <ChatWindow chatId={selectedChatId} />
+        <ChatWindow chatId={selectedChatId} onBack={() => setSelectedChatId("")} />
       </div>
     </div>
   ) : null;
