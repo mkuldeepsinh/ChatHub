@@ -37,7 +37,6 @@ const Navbar: React.FC<NavbarProps> = ({ onChatCreated, onSelectChat }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-20">
           {/* Left: Logo */}
           <div className="flex items-center space-x-2">
-            <span className="text-2xl font-bold tracking-tight">💬</span>
             <span className="hidden md:inline text-2xl font-bold tracking-tight">ChatHub</span>
           </div>
           {/* Center: Search */}

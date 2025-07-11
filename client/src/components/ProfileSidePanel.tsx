@@ -49,6 +49,11 @@ const ProfileSidePanel: React.FC<ProfileSidePanelProps> = ({ open, onClose }) =>
     }
   };
 
+  const handleLogout = async () => {
+    await authAPI.logout();
+    window.location.reload();
+  };
+
   if (!open) return null;
 
   return (
@@ -78,9 +83,14 @@ const ProfileSidePanel: React.FC<ProfileSidePanelProps> = ({ open, onClose }) =>
         </div>
         {error && <div className="text-red-400 text-center mt-2">{error}</div>}
         {success && <div className="text-green-400 text-center mt-2">{success}</div>}
-        <button onClick={handleSave} disabled={loading} className="mt-6 w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 rounded-lg transition disabled:opacity-60">
-          {loading ? 'Saving...' : 'Save'}
-        </button>
+        <div className="mt-6 flex flex-row gap-4">
+          <button onClick={handleSave} disabled={loading} className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 rounded-lg transition disabled:opacity-60">
+            {loading ? 'Saving...' : 'Save'}
+          </button>
+          <button onClick={handleLogout} className="flex-1 bg-red-500 hover:bg-red-600 text-white font-semibold py-2 rounded-lg transition">
+            Logout
+          </button>
+        </div>
       </div>
     </div>
   );

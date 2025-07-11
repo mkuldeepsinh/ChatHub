@@ -89,11 +89,11 @@ const ChatPage: React.FC<{ onChatCreated: (id: string) => void; selectedChatId: 
   return (
     <div className="flex h-full bg-gray-900 overflow-hidden">
       {/* Sidebar: show on md+ or when no chat is selected */}
-      <div className={`h-full w-full md:w-72 ${selectedChatId ? 'hidden' : 'block'} md:block`}>
+      <div className={`h-full w-full md:w-90 ${selectedChatId ? 'hidden' : 'block'} md:block`}>
         {sidebar}
       </div>
       {/* Chat: show on md+ or when a chat is selected */}
-      <div className={`flex-1 h-full ${!selectedChatId ? 'hidden' : 'flex'} md:flex`}>
+      <div className={`w-full h-screen ${!selectedChatId ? 'hidden' : 'flex'} md:flex md:w-[calc(100vw-22.5rem)]`}>
         {chatInterface}
       </div>
     </div>

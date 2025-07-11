@@ -12,7 +12,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onSelectChat, selectedChatId }) => {
   const { user } = useAuth();
 
   return (
-    <aside className="block md:flex md:flex-col w-full md:w-72 h-[calc(100vh-5rem)] bg-gray-900 text-white shadow-2xl rounded-bl-2xl rounded-tr-none rounded-tl-none p-2 transition-all duration-300 z-30">
+    <aside className="flex flex-col w-full md:w-90 h-screen bg-gray-900 text-white shadow-2xl rounded-bl-2xl rounded-tr-none rounded-tl-none p-2 transition-all duration-300 z-30">
       <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900">
         {loading ? (
           <div className="text-center text-gray-400 py-8">Loading chats...</div>

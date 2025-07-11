@@ -154,9 +154,9 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
   };
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-gray-800 overflow-hidden rounded-2xl">
+    <div className="flex-1 flex flex-col h-screen min-h-0 bg-gray-800 overflow-hidden rounded-2xl">
       {/* Chat header fixed below navbar */}
-      <div className="sticky top-0 z-30 bg-gray-900 px-6 py-4 flex items-center justify-between shadow-md border-b border-gray-800">
+      <div className="sticky top-20 z-30 bg-gray-900 px-6 py-4 flex items-center justify-between shadow-md border-b border-gray-800">
         {/* Back button for mobile */}
         <button
           className="md:hidden mr-3 text-white"
@@ -177,7 +177,21 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
         )}
       </div>
       {/* Messages area */}
-      <div className="flex-1 overflow-y-auto space-y-4 m-2">
+      <div className="flex-1 min-h-0 overflow-y-auto space-y-4 m-2 pt-20">
+        {messages.length === 0 && (
+          <div className="flex justify-center items-center h-full">
+            <div className="text-center text-gray-400 text-lg font-semibold">
+              Welcome to ChatHub!<br />Here we give you privacy.<br />Write any message you want.
+            </div>
+          </div>
+        )}
+        {messages.length >=1 &&(
+            <div className="flex justify-center">
+            <div className="text-center text-gray-400 text-lg font-semibold">
+              Welcome to ChatHub!
+            </div>
+          </div>
+        )}
         {messages.map((msg) => (
           <div
             key={msg._id}
@@ -199,7 +213,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
         ))}
         <div ref={messagesEndRef} />
       </div>
-      <form onSubmit={handleSend} className="bg-gray-900 flex items-center space-x-2 px-2 py-2 rounded-b-2xl">
+      <form onSubmit={handleSend} className="bg-gray-900 flex items-center space-x-2 px-2 py-2 rounded-b-2xl sticky bottom-0 z-20">
         <button className="p-2 rounded-full hover:bg-gray-800 transition" type="button" disabled>
           <FiPaperclip size={22} className="text-gray-400" />
         </button>
