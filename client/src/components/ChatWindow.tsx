@@ -38,6 +38,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
   const [searchError, setSearchError] = useState('');
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
+  const [selectedMedia, setSelectedMedia] = useState<{ type: string; url: string; name: string } | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -285,15 +286,36 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
               )}
               {/* Media rendering */}
               {msg.messageType === 'image' && msg.mediaUrl && (
-                <img src={msg.mediaUrl} alt={msg.content || 'image'} className="rounded-xl mb-1 max-h-60 object-contain bg-black" style={{ maxWidth: '320px' }} />
+                <img 
+                  src={msg.mediaUrl} 
+                  alt={msg.content || 'image'} 
+                  className="rounded-xl mb-1 max-h-60 object-contain bg-black cursor-pointer hover:opacity-80 transition-opacity" 
+                  style={{ maxWidth: '320px' }}
+                  onClick={() => setSelectedMedia({ type: 'image', url: msg.mediaUrl, name: msg.content || 'Image' })}
+                />
               )}
               {msg.messageType === 'video' && msg.mediaUrl && (
-                <video src={msg.mediaUrl} controls className="rounded-xl mb-1 bg-black" style={{ width: '320px', height: '180px', objectFit: 'cover' }} />
+                <video 
+                  src={msg.mediaUrl} 
+                  controls 
+                  className="rounded-xl mb-1 bg-black cursor-pointer hover:opacity-80 transition-opacity" 
+                  style={{ width: '320px', height: '180px', objectFit: 'cover' }}
+                  onClick={() => setSelectedMedia({ type: 'video', url: msg.mediaUrl, name: msg.content || 'Video' })}
+                />
               )}
               {msg.messageType === 'file' && msg.mediaUrl && (
-                <a href={msg.mediaUrl} target="_blank" rel="noopener noreferrer" className="text-blue-400 underline mb-1 break-all">
+                <div 
+                  className="text-blue-400 underline mb-1 break-all cursor-pointer hover:text-blue-300 transition-colors"
+                  onClick={() => {
+                    if (msg.content?.toLowerCase().includes('.pdf')) {
+                      setSelectedMedia({ type: 'pdf', url: msg.mediaUrl, name: msg.content || 'PDF' });
+                    } else {
+                      window.open(msg.mediaUrl, '_blank');
+                    }
+                  }}
+                >
                   {msg.content || 'Download file'}
-                </a>
+                </div>
               )}
               <div
                 className={`px-4 py-2 rounded-2xl shadow text-sm ${
@@ -430,6 +452,56 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
                 ))}
               </ul>
             )}
+          </div>
+        </div>
+      )}
+      
+      {/* Media Modal/Lightbox */}
+      {selectedMedia && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm">
+          <div className="relative w-full h-full flex items-center justify-center p-4">
+            {/* Close button */}
+            <button 
+              onClick={() => setSelectedMedia(null)}
+              className="absolute top-4 right-4 z-10 text-white hover:text-gray-300 text-2xl font-bold bg-black/50 rounded-full w-10 h-10 flex items-center justify-center transition-colors"
+            >
+              ×
+            </button>
+            
+            {/* Media content */}
+            <div className="w-full h-full flex items-center justify-center">
+              {selectedMedia.type === 'image' && (
+                <img 
+                  src={selectedMedia.url} 
+                  alt={selectedMedia.name}
+                  className="max-w-full max-h-full object-contain"
+                />
+              )}
+              
+              {selectedMedia.type === 'video' && (
+                <video 
+                  src={selectedMedia.url} 
+                  controls 
+                  autoPlay
+                  className="max-w-full max-h-full object-contain"
+                />
+              )}
+              
+              {selectedMedia.type === 'pdf' && (
+                <iframe 
+                  src={selectedMedia.url}
+                  className="w-full h-full border-0"
+                  title={selectedMedia.name}
+                />
+              )}
+            </div>
+            
+            {/* File name */}
+            <div className="absolute bottom-4 left-4 right-4 text-center">
+              <div className="bg-black/70 text-white px-4 py-2 rounded-lg inline-block">
+                {selectedMedia.name}
+              </div>
+            </div>
           </div>
         </div>
       )}

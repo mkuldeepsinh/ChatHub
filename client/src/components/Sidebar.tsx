@@ -14,6 +14,26 @@ const Sidebar: React.FC<SidebarProps> = ({ onSelectChat, selectedChatId }) => {
   return (
     <aside className="flex flex-col w-full md:w-90 h-screen bg-gray-900 text-white shadow-2xl rounded-bl-2xl rounded-tr-none rounded-tl-none p-2 transition-all duration-300 z-30">
       <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900">
+        {/* Fake ChatHub chat always at top */}
+        <div className="flex items-center space-x-3 p-3 mb-2 rounded-xl cursor-pointer transition-all duration-200 hover:bg-gray-800 bg-gray-800">
+          <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-blue-800 rounded-full flex items-center justify-center text-lg font-bold">
+            C
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex justify-between items-center">
+              <span className="font-semibold truncate text-blue-400">
+                ChatHub
+              </span>
+              <span className="text-xs text-gray-400 ml-2 whitespace-nowrap">
+                Always Online
+              </span>
+            </div>
+            <div className="text-sm text-gray-300 truncate">
+              Welcome to ChatHub! Start chatting with friends.
+            </div>
+          </div>
+        </div>
+        
         {loading ? (
           <div className="text-center text-gray-400 py-8">Loading chats...</div>
         ) : chats.length === 0 ? (
@@ -38,7 +58,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onSelectChat, selectedChatId }) => {
                   {displayName[0]?.toUpperCase() || (chat.isGroup ? 'G' : 'U')}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex justify-between items-center">
+                  <div className="flex justify-between items-center text-blue-400">
                     <span className="font-semibold truncate">
                       {displayName}
                     </span>
