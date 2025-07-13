@@ -1,6 +1,6 @@
 
 
-import React, { useState } from 'react';
+import React, {  } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Login from './components/Auth/Login';
@@ -10,7 +10,7 @@ import Sidebar from './components/Sidebar';
 import { ChatProvider, useChatContext } from './contexts/ChatContext';
 import ChatWindow from './components/ChatWindow';
 import { SocketProvider } from './contexts/SocketContext';
-import { FiArrowLeft } from 'react-icons/fi';
+
 
 // Protected Route Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -44,7 +44,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 // ];
 
 // Chat Page Component (placeholder for now)
-const ChatPage: React.FC<{ onChatCreated: (id: string) => void; selectedChatId: string | null; setSelectedChatId: (id: string) => void; onSelectChat: (id: string) => void }> = ({ onChatCreated, selectedChatId, setSelectedChatId, onSelectChat }) => {
+const ChatPage: React.FC<{ onChatCreated: (id: string) => void; selectedChatId: string | null; setSelectedChatId: (id: string) => void; onSelectChat: (id: string) => void }> = ({  selectedChatId, setSelectedChatId, onSelectChat }) => {
   const { setCurrentOpenChatId, chats } = useChatContext();
   const { user } = useAuth();
 
@@ -84,7 +84,14 @@ const ChatPage: React.FC<{ onChatCreated: (id: string) => void; selectedChatId: 
         <ChatWindow chatId={selectedChatId} onBack={() => setSelectedChatId("")} />
       </div>
     </div>
-  ) : null;
+  ) : (
+    <div className="flex flex-1 items-center justify-center h-full bg-gray-900">
+      <div className="text-center">
+        <div className="text-3xl font-bold text-white mb-2">Made with <span className="text-white-500">♥</span> by Kuldeepsinh Makwana!</div>
+        <div className="text-gray-400 text-lg">Select a chat to start messaging.</div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="flex h-full bg-gray-900 overflow-hidden">

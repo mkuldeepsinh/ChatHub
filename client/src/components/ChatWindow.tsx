@@ -4,7 +4,7 @@ import { useSocket } from '../contexts/SocketContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useChatContext } from '../contexts/ChatContext';
 import { authAPI } from '../utils/api';
-import { FiSend, FiPaperclip, FiEdit2 } from 'react-icons/fi';
+import { FiSend, FiPaperclip } from 'react-icons/fi';
 import { FiMoreVertical } from 'react-icons/fi';
 
 interface ChatWindowProps {
@@ -197,16 +197,28 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
             key={msg._id}
             className={`flex ${msg.sender?._id === user?._id ? 'justify-end' : 'justify-start'}`}
           >
-            <div
-              className={`max-w-xs md:max-w-md px-4 py-2 rounded-2xl shadow text-sm ${
-                msg.sender?._id === user?._id
-                  ? 'bg-blue-500 text-white rounded-br-none'
-                  : 'bg-gray-700 text-gray-100 rounded-bl-none'
-              }`}
-            >
-              <div>{msg.content}</div>
-              <div className="text-xs text-gray-300 mt-1 text-right">
-                {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            <div className="flex flex-col max-w-xs md:max-w-md">
+              {/* Show sender name in group chats for messages from others */}
+              {isGroup && msg.sender?._id !== user?._id && (
+                <div className="text-xs text-gray-400 mb-1 ml-1 font-medium">
+                  {msg.sender?.username || 'Unknown User'}
+                </div>
+              )}
+              <div
+                className={`px-4 py-2 rounded-2xl shadow text-sm ${
+                  msg.sender?._id === user?._id
+                    ? 'bg-blue-500 text-white rounded-br-none'
+                    : 'bg-gray-700 text-gray-100 rounded-bl-none'
+                }`}
+              >
+                <div>{msg.content}</div>
+                <div className={`text-xs mt-1 text-right ${
+                  msg.sender?._id === user?._id 
+                    ? 'text-blue-100' 
+                    : 'text-gray-300'
+                }`}>
+                  {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </div>
               </div>
             </div>
           </div>
