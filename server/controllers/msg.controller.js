@@ -4,7 +4,7 @@ import { Chat } from "../models/chat.model.js";
 // create msg 
 export const sendMessage = async(req , res)=>{
     try{
-        const { chatId, content, messageType, mediaUrl } = req.body;
+        const { chatId, content, messageType, mediaUrl, mediaUrls, imageCount } = req.body;
         const senderId = req.user._id;
 
         if (!chatId) {
@@ -22,7 +22,11 @@ export const sendMessage = async(req , res)=>{
         return res.status(400).json({ message: `${messageType} message requires a media URL` });
         }
 
-        if (!content && !mediaUrl) {
+        if (messageType === "image_group" && (!mediaUrls || !Array.isArray(mediaUrls) || mediaUrls.length === 0)) {
+        return res.status(400).json({ message: "Image group message requires media URLs array" });
+        }
+
+        if (!content && !mediaUrl && !mediaUrls) {
         return res.status(400).json({ message: "Message must contain text or media" });
         }
 
@@ -32,6 +36,8 @@ export const sendMessage = async(req , res)=>{
             content,
             messageType,
             mediaUrl,
+            mediaUrls,
+            imageCount,
             readBy: [senderId],
           });
       

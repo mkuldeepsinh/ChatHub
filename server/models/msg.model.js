@@ -23,13 +23,25 @@ const msgSchema = new Schema(
     },
     messageType: {
       type: String,
-      enum: ["text", "image", "video", "file"],
+      enum: ["text", "image", "video", "file", "image_group"],
       default: "text",
     },
     mediaUrl: {
       type: String,
       required: function () {
-        return this.messageType !== "text";
+        return this.messageType !== "text" && this.messageType !== "image_group";
+      },
+    },
+    mediaUrls: {
+      type: [String],
+      required: function () {
+        return this.messageType === "image_group";
+      },
+    },
+    imageCount: {
+      type: Number,
+      required: function () {
+        return this.messageType === "image_group";
       },
     },
     readBy: [

@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { chatAPI, authAPI } from '../utils/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useChatContext } from '../contexts/ChatContext';
+import ImageCropModal from './ImageCropModal';
 
 interface NewGroupModalProps {
   open: boolean;
@@ -13,14 +14,21 @@ interface NewGroupModalProps {
 const NewGroupModal: React.FC<NewGroupModalProps> = ({ open, onClose, onGroupCreated, navbarHeight = 80 }) => {
   const { user } = useAuth();
   const [groupName, setGroupName] = useState('');
+  const [groupIcon, setGroupIcon] = useState('');
   const [search, setSearch] = useState('');
   const [results, setResults] = useState<any[]>([]);
   const [selectedUsers, setSelectedUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [uploadingIcon, setUploadingIcon] = useState(false);
+  const [showCropModal, setShowCropModal] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
   const { addOrUpdateChat } = useChatContext();
+
+  const CLOUDINARY_CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+  const CLOUDINARY_UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
 
   const handleSearch = async (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value);
@@ -51,6 +59,44 @@ const NewGroupModal: React.FC<NewGroupModalProps> = ({ open, onClose, onGroupCre
     setSelectedUsers(prev => prev.filter((user) => user._id !== u._id));
   };
 
+  // Handle group icon upload
+  const handleGroupIconUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setError('Please select an image file');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Image size should be less than 5MB');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setSelectedImage(e.target?.result as string);
+      setShowCropModal(true);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Crop functions
+  const handleCropSave = async (croppedImageUrl: string) => {
+    setGroupIcon(croppedImageUrl);
+    setInfo('Group icon uploaded successfully!');
+    setShowCropModal(false);
+    setSelectedImage(null);
+  };
+
+  const handleCropClose = () => {
+    setShowCropModal(false);
+    setSelectedImage(null);
+  };
+
   const handleCreateGroup = async () => {
     if (!groupName.trim() || selectedUsers.length === 0) {
       setError('Group name and at least one member required');
@@ -62,6 +108,7 @@ const NewGroupModal: React.FC<NewGroupModalProps> = ({ open, onClose, onGroupCre
     try {
       const groupData = {
         groupName: groupName.trim(),
+        groupIcon: groupIcon,
         userIds: selectedUsers.map(u => u._id),
       };
       const chat = await chatAPI.createGroup(groupData);
@@ -88,6 +135,44 @@ const NewGroupModal: React.FC<NewGroupModalProps> = ({ open, onClose, onGroupCre
       >
         <button onClick={onClose} className="absolute top-3 right-3 text-gray-400 hover:text-white text-xl">&times;</button>
         <h2 className="text-xl font-bold text-white mb-4 text-center">Create New Group</h2>
+        
+        {/* Group Icon Section */}
+        <div className="mb-4">
+          <label className="block text-gray-300 mb-2">Group Icon (Optional)</label>
+          <div className="flex items-center space-x-4">
+            <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-800 flex items-center justify-center">
+              {groupIcon ? (
+                <img 
+                  src={groupIcon} 
+                  alt="Group Icon" 
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg">
+                  {groupName?.[0]?.toUpperCase() || 'G'}
+                </div>
+              )}
+            </div>
+            <div className="flex-1">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleGroupIconUpload}
+                className="hidden"
+                id="newGroupIconInput"
+                disabled={uploadingIcon || creating}
+              />
+              <label
+                htmlFor="newGroupIconInput"
+                className="block w-full px-4 py-2 rounded-lg bg-gray-800 text-white text-center cursor-pointer hover:bg-gray-700 transition disabled:opacity-60"
+                style={{ pointerEvents: uploadingIcon || creating ? 'none' : 'auto' }}
+              >
+                {uploadingIcon ? 'Uploading...' : groupIcon ? 'Change Icon' : 'Upload Icon'}
+              </label>
+            </div>
+          </div>
+        </div>
+
         <input
           type="text"
           value={groupName}
@@ -144,6 +229,16 @@ const NewGroupModal: React.FC<NewGroupModalProps> = ({ open, onClose, onGroupCre
           {creating ? 'Creating...' : 'Create Group'}
         </button>
       </div>
+
+      {/* Crop Modal */}
+      <ImageCropModal
+        open={showCropModal}
+        onClose={handleCropClose}
+        onCropSave={handleCropSave}
+        title="Crop Group Icon"
+        selectedImage={selectedImage}
+        uploading={uploadingIcon}
+      />
     </>
   );
 };

@@ -23,6 +23,9 @@ const ChatSchema = new Schema(
     groupName:{
         type : String
     },
+    groupIcon:{
+        type : String
+    },
     latestMessage: {
       type: ObjectId,
       ref: "Msg"

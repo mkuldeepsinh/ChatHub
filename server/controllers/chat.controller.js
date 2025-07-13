@@ -72,7 +72,7 @@ export const getUserChats = async (req, res) => {
 export const createGroupChat = async (req, res) => {
     try {
       const currentUserId = req.user._id;
-      const { userIds, groupName } = req.body;
+      const { userIds, groupName, groupIcon } = req.body;
   
       if (!userIds || userIds.length < 2 || !groupName) {
         return res.status(400).json({
@@ -87,6 +87,7 @@ export const createGroupChat = async (req, res) => {
         isGroup: true,
         users: allUsers,
         groupName,
+        groupIcon,
         groupAdmin: currentUserId,
       });
   
@@ -119,11 +120,11 @@ export const createGroupChat = async (req, res) => {
   export const updateGroup = async (req, res) => {
     try {
       const { chatId } = req.params;
-      const { groupName, users } = req.body;
+      const { groupName, groupIcon, users } = req.body;
   
       const updatedChat = await Chat.findByIdAndUpdate(
         chatId,
-        { groupName, users },
+        { groupName, groupIcon, users },
         { new: true }
       )
         .populate("users", "-password")

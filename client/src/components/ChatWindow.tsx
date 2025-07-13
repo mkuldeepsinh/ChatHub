@@ -6,6 +6,7 @@ import { useChatContext } from '../contexts/ChatContext';
 import { authAPI } from '../utils/api';
 import { FiSend, FiPaperclip } from 'react-icons/fi';
 import { FiMoreVertical } from 'react-icons/fi';
+import ImageCropModal from './ImageCropModal';
 
 interface ChatWindowProps {
   chatId: string;
@@ -28,10 +29,14 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
   const [showEditModal, setShowEditModal] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [editGroupName, setEditGroupName] = useState('');
+  const [editGroupIcon, setEditGroupIcon] = useState('');
   const [editUsers, setEditUsers] = useState<any[]>([]);
   const [editLoading, setEditLoading] = useState(false);
   const [editError, setEditError] = useState('');
   const [editSuccess, setEditSuccess] = useState('');
+  const [uploadingGroupIcon, setUploadingGroupIcon] = useState(false);
+  const [showGroupIconCropModal, setShowGroupIconCropModal] = useState(false);
+  const [selectedGroupIconImage, setSelectedGroupIconImage] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
@@ -39,6 +44,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
   const [selectedMedia, setSelectedMedia] = useState<{ type: string; url: string; name: string } | null>(null);
+  const [pendingImages, setPendingImages] = useState<Array<{ content: string; messageType: string; mediaUrl: string }>>([]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -48,10 +54,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
     
-    console.log('File selected:', file.name, file.type);
+    console.log('Files selected:', files.length, 'files');
     console.log('Upload preset:', CLOUDINARY_UPLOAD_PRESET);
     console.log('Cloud name:', CLOUDINARY_CLOUD_NAME);
     
@@ -62,46 +68,87 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
     
     setUploading(true);
     setUploadError('');
+    
     try {
-      // Prepare form data
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-      
-      console.log('Uploading to Cloudinary...');
-      console.log('URL:', `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`);
-      
-      // Upload to Cloudinary
-      const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`, {
-        method: 'POST',
-        body: formData,
-      });
-      
-      console.log('Upload response status:', res.status);
-      const data = await res.json();
-      console.log('Upload response:', data);
-      
-      if (!data.secure_url) {
-        console.error('Upload failed:', data);
-        throw new Error(data.error?.message || 'Upload failed');
-      }
-      
-      // Determine message type
-      let messageType = 'file';
-      if (file.type.startsWith('image/')) messageType = 'image';
-      else if (file.type.startsWith('video/')) messageType = 'video';
-      
-      console.log('Sending message with type:', messageType, 'and URL:', data.secure_url);
-      
-      // Send message with mediaUrl
-      if (socket) {
-        socket.emit('send_message', {
-          chatId,
+      // Upload all files
+      const uploadPromises = files.map(async (file) => {
+        console.log('Uploading file:', file.name, file.type);
+        
+        // Prepare form data
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+        
+        // Upload to Cloudinary
+        const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`, {
+          method: 'POST',
+          body: formData,
+        });
+        
+        console.log('Upload response status for', file.name, ':', res.status);
+        const data = await res.json();
+        console.log('Upload response for', file.name, ':', data);
+        
+        if (!data.secure_url) {
+          throw new Error(`Upload failed for ${file.name}: ${data.error?.message || 'Upload failed'}`);
+        }
+        
+        // Determine message type
+        let messageType = 'file';
+        if (file.type.startsWith('image/')) messageType = 'image';
+        else if (file.type.startsWith('video/')) messageType = 'video';
+        
+        return {
           content: file.name,
           messageType,
           mediaUrl: data.secure_url,
+        };
+      });
+      
+      // Wait for all uploads to complete
+      const uploadedFiles = await Promise.all(uploadPromises);
+      console.log('All files uploaded successfully:', uploadedFiles.length);
+      
+      // Group images and send other files separately
+      const images = uploadedFiles.filter(file => file.messageType === 'image');
+      const otherFiles = uploadedFiles.filter(file => file.messageType !== 'image');
+      
+      // Send images as a group if there are multiple
+      if (images.length > 1) {
+        // Store images temporarily to group them
+        setPendingImages(images);
+        
+        // Send as a single grouped message
+        if (socket) {
+          socket.emit('send_message', {
+            chatId,
+            content: `Multiple images (${images.length})`,
+            messageType: 'image_group',
+            mediaUrls: images.map(img => img.mediaUrl),
+            imageCount: images.length
+          });
+        }
+      } else if (images.length === 1) {
+        // Send single image normally
+        if (socket) {
+          socket.emit('send_message', {
+            chatId,
+            ...images[0],
+          });
+        }
+      }
+      
+      // Send other files (videos, documents) separately
+      if (socket) {
+        otherFiles.forEach((fileData) => {
+          socket.emit('send_message', {
+            chatId,
+            ...fileData,
+          });
         });
       }
+      
+      console.log('All messages sent successfully');
     } catch (err: any) {
       console.error('Upload error:', err);
       setUploadError(err.message || 'Upload failed');
@@ -132,6 +179,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
   useEffect(() => {
     if (showEditModal && isGroup && isAdmin && chat) {
       setEditGroupName(chat.groupName || '');
+      setEditGroupIcon(chat.groupIcon || '');
       setEditUsers(chat.users || []);
       setEditError('');
       setEditSuccess('');
@@ -144,6 +192,44 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
     setEditUsers(editUsers.filter((u: any) => u._id !== userId));
   };
 
+  // Handle group icon upload
+  const handleGroupIconUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setEditError('Please select an image file');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setEditError('Image size should be less than 5MB');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setSelectedGroupIconImage(e.target?.result as string);
+      setShowGroupIconCropModal(true);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Group icon crop functions
+  const handleGroupIconCropSave = async (croppedImageUrl: string) => {
+    setEditGroupIcon(croppedImageUrl);
+    setEditSuccess('Group icon uploaded successfully!');
+    setShowGroupIconCropModal(false);
+    setSelectedGroupIconImage(null);
+  };
+
+  const handleGroupIconCropClose = () => {
+    setShowGroupIconCropModal(false);
+    setSelectedGroupIconImage(null);
+  };
+
   // Save group changes (admin only)
   const handleSaveGroup = async () => {
     setEditLoading(true);
@@ -152,6 +238,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
     try {
       const updatedChat = await chatAPI.updateGroup(chatId, {
         groupName: editGroupName,
+        groupIcon: editGroupIcon,
         users: editUsers.map((u: any) => u._id), // <-- use 'users' not 'userIds'
       });
       addOrUpdateChat(updatedChat); // Update context with new group info
@@ -251,7 +338,15 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
           <div className="w-10 h-10 bg-gradient-to-br from-gray-700 to-gray-800 rounded-full flex items-center justify-center text-base font-bold overflow-hidden">
             {isGroup ? (
               // Group chat - show group icon or first letter
-              displayName[0]?.toUpperCase() || 'G'
+              chat?.groupIcon ? (
+                <img 
+                  src={chat.groupIcon} 
+                  alt={displayName || 'Group'} 
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                displayName[0]?.toUpperCase() || 'G'
+              )
             ) : (
               // Individual chat - show receiver's profile picture or first letter
               chat?.users?.find((u: any) => u._id !== user?._id)?.profilePicture ? (
@@ -300,10 +395,27 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
             className={`flex ${msg.sender?._id === user?._id ? 'justify-end' : 'justify-start'}`}
           >
             <div className="flex flex-col max-w-xs md:max-w-md">
-              {/* Show sender name in group chats for messages from others */}
+              {/* Show sender name and profile picture in group chats for messages from others */}
               {isGroup && msg.sender?._id !== user?._id && (
-                <div className="text-xs text-gray-400 mb-1 ml-1 font-medium">
-                  {msg.sender?.username || 'Unknown User'}
+                <div className="flex items-center mb-1 ml-1">
+                  {/* Profile picture */}
+                  <div className="w-6 h-6 rounded-full overflow-hidden mr-2 flex-shrink-0">
+                    {msg.sender?.profilePicture ? (
+                      <img 
+                        src={msg.sender.profilePicture} 
+                        alt={msg.sender.username || 'Profile'} 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-xs font-bold text-white">
+                        {msg.sender?.username?.[0]?.toUpperCase() || 'U'}
+                      </div>
+                    )}
+                  </div>
+                  {/* Sender name */}
+                  <div className="text-xs text-gray-400 font-medium">
+                    {msg.sender?.username || 'Unknown User'}
+                  </div>
                 </div>
               )}
               {/* Media rendering */}
@@ -315,6 +427,33 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
                   style={{ maxWidth: '320px' }}
                   onClick={() => setSelectedMedia({ type: 'image', url: msg.mediaUrl, name: msg.content || 'Image' })}
                 />
+              )}
+              
+              {/* Grouped images rendering */}
+              {msg.messageType === 'image_group' && msg.mediaUrls && (
+                <div className="grid grid-cols-2 gap-1 mb-1" style={{ maxWidth: '320px' }}>
+                  {msg.mediaUrls.slice(0, 4).map((url: string, index: number) => (
+                    <div key={index} className="relative">
+                      <img 
+                        src={url} 
+                        alt={`Image ${index + 1}`}
+                        className={`rounded-lg object-cover bg-black cursor-pointer hover:opacity-80 transition-opacity ${
+                          msg.mediaUrls.length === 1 ? 'col-span-2' : 
+                          msg.mediaUrls.length === 2 ? 'h-32' : 'h-24'
+                        }`}
+                        onClick={() => setSelectedMedia({ type: 'image', url, name: `Image ${index + 1}` })}
+                      />
+                      {/* Show +X indicator for additional images */}
+                      {index === 3 && msg.mediaUrls.length > 4 && (
+                        <div className="absolute inset-0 bg-black/70 rounded-lg flex items-center justify-center">
+                          <span className="text-white font-bold text-lg">
+                            +{msg.mediaUrls.length - 4}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
               )}
               {msg.messageType === 'video' && msg.mediaUrl && (
                 <video 
@@ -369,6 +508,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
           accept="image/*,video/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/zip,application/x-rar-compressed,application/octet-stream"
           onChange={handleFileChange}
           disabled={uploading}
+          multiple
         />
         <button
           className="p-2 rounded-full hover:bg-gray-800 transition"
@@ -390,7 +530,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
         <button className="p-2 rounded-full bg-blue-500 hover:bg-blue-600 transition flex items-center justify-center" type="submit" disabled={uploading}>
           <FiSend size={22} className="text-white" />
         </button>
-        {uploading && <span className="ml-2 text-blue-400 text-xs">Uploading...</span>}
+        {uploading && <span className="ml-2 text-blue-400 text-xs">Uploading multiple files...</span>}
         {uploadError && <span className="ml-2 text-red-400 text-xs">{uploadError}</span>}
       </form>
       {/* Edit group modal: admin can edit, others see members list */}
@@ -401,6 +541,43 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
             <h2 className="text-xl font-bold text-white mb-4 text-center">Group Info</h2>
             {isAdmin ? (
               <>
+                {/* Group Icon Section */}
+                <div className="mb-4">
+                  <label className="block text-gray-300 mb-2">Group Icon</label>
+                  <div className="flex items-center space-x-4">
+                    <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-800 flex items-center justify-center">
+                      {editGroupIcon ? (
+                        <img 
+                          src={editGroupIcon} 
+                          alt="Group Icon" 
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg">
+                          {editGroupName?.[0]?.toUpperCase() || 'G'}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleGroupIconUpload}
+                        className="hidden"
+                        id="groupIconInput"
+                        disabled={uploadingGroupIcon || editLoading}
+                      />
+                      <label
+                        htmlFor="groupIconInput"
+                        className="block w-full px-4 py-2 rounded-lg bg-gray-800 text-white text-center cursor-pointer hover:bg-gray-700 transition disabled:opacity-60"
+                        style={{ pointerEvents: uploadingGroupIcon || editLoading ? 'none' : 'auto' }}
+                      >
+                        {uploadingGroupIcon ? 'Uploading...' : editGroupIcon ? 'Change Icon' : 'Upload Icon'}
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
                 <label className="block text-gray-300 mb-1">Group Name</label>
                 <input
                   className="w-full px-4 py-2 rounded-lg bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
@@ -527,6 +704,16 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
           </div>
         </div>
       )}
+
+      {/* Group Icon Crop Modal */}
+      <ImageCropModal
+        open={showGroupIconCropModal}
+        onClose={handleGroupIconCropClose}
+        onCropSave={handleGroupIconCropSave}
+        title="Crop Group Icon"
+        selectedImage={selectedGroupIconImage}
+        uploading={uploadingGroupIcon}
+      />
     </div>
   );
 };

@@ -57,7 +57,15 @@ const Sidebar: React.FC<SidebarProps> = ({ onSelectChat, selectedChatId }) => {
                 <div className="w-12 h-12 bg-gradient-to-br from-gray-700 to-gray-800 rounded-full flex items-center justify-center text-lg font-bold overflow-hidden">
                   {chat.isGroup ? (
                     // Group chat - show group icon or first letter
-                    displayName[0]?.toUpperCase() || 'G'
+                    chat.groupIcon ? (
+                      <img 
+                        src={chat.groupIcon} 
+                        alt={displayName || 'Group'} 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      displayName[0]?.toUpperCase() || 'G'
+                    )
                   ) : (
                     // Individual chat - show receiver's profile picture or first letter
                     receiver?.profilePicture ? (
