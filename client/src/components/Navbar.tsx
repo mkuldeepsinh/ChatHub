@@ -109,8 +109,16 @@ const Navbar: React.FC<NavbarProps> = ({ onChatCreated, onSelectChat }) => {
               <span className="hidden md:inline">New Group</span>
             </button>
             <div className="flex items-center space-x-2 cursor-pointer hover:bg-gray-900 rounded-xl px-3 py-2 transition" onClick={() => setShowProfile(true)}>
-              <div className="w-10 h-10 bg-white text-black rounded-full flex items-center justify-center font-bold text-lg">
-                <FiUser size={24} />
+              <div className="w-10 h-10 bg-white text-black rounded-full flex items-center justify-center font-bold text-lg overflow-hidden">
+                {user?.profilePicture ? (
+                  <img 
+                    src={user.profilePicture} 
+                    alt="Profile" 
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <FiUser size={24} />
+                )}
               </div>
               <div className="hidden md:block">
                 <div className="font-semibold">{user?.username || 'Username'}</div>

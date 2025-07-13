@@ -245,7 +245,29 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
         >
           <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather feather-arrow-left"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
         </button>
-        <span className="font-bold text-lg text-white truncate flex-1">{displayName}</span>
+        
+        {/* Profile picture and name */}
+        <div className="flex items-center space-x-3 flex-1">
+          <div className="w-10 h-10 bg-gradient-to-br from-gray-700 to-gray-800 rounded-full flex items-center justify-center text-base font-bold overflow-hidden">
+            {isGroup ? (
+              // Group chat - show group icon or first letter
+              displayName[0]?.toUpperCase() || 'G'
+            ) : (
+              // Individual chat - show receiver's profile picture or first letter
+              chat?.users?.find((u: any) => u._id !== user?._id)?.profilePicture ? (
+                <img 
+                  src={chat.users.find((u: any) => u._id !== user?._id)?.profilePicture} 
+                  alt={displayName || 'Profile'} 
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                displayName[0]?.toUpperCase() || 'U'
+              )
+            )}
+          </div>
+          <span className="font-bold text-lg text-white truncate">{displayName}</span>
+        </div>
+        
         {isGroup && (
           <button
             className="flex items-center text-blue-400 hover:text-blue-600 transition"

@@ -54,8 +54,22 @@ const Sidebar: React.FC<SidebarProps> = ({ onSelectChat, selectedChatId }) => {
                 }`}
                 onClick={() => onSelectChat && onSelectChat(chat._id)}
               >
-                <div className="w-12 h-12 bg-gradient-to-br from-gray-700 to-gray-800 rounded-full flex items-center justify-center text-lg font-bold">
-                  {displayName[0]?.toUpperCase() || (chat.isGroup ? 'G' : 'U')}
+                <div className="w-12 h-12 bg-gradient-to-br from-gray-700 to-gray-800 rounded-full flex items-center justify-center text-lg font-bold overflow-hidden">
+                  {chat.isGroup ? (
+                    // Group chat - show group icon or first letter
+                    displayName[0]?.toUpperCase() || 'G'
+                  ) : (
+                    // Individual chat - show receiver's profile picture or first letter
+                    receiver?.profilePicture ? (
+                      <img 
+                        src={receiver.profilePicture} 
+                        alt={receiver.username || 'Profile'} 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      displayName[0]?.toUpperCase() || 'U'
+                    )
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between items-center text-blue-400">
