@@ -12,6 +12,13 @@ interface ChatWindowProps {
   onBack?: () => void;
 }
 
+const CLOUDINARY_CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+const CLOUDINARY_UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+
+console.log('Cloudinary Cloud Name:', CLOUDINARY_CLOUD_NAME);
+console.log('Cloudinary Upload Preset:', CLOUDINARY_UPLOAD_PRESET);
+console.log('All env vars:', import.meta.env);
+
 const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
   const { user } = useAuth();
   const socket = useSocket();
@@ -29,6 +36,78 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileButtonClick = () => {
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    console.log('File selected:', file.name, file.type);
+    console.log('Upload preset:', CLOUDINARY_UPLOAD_PRESET);
+    console.log('Cloud name:', CLOUDINARY_CLOUD_NAME);
+    
+    if (!CLOUDINARY_UPLOAD_PRESET) {
+      setUploadError('Upload preset not configured');
+      return;
+    }
+    
+    setUploading(true);
+    setUploadError('');
+    try {
+      // Prepare form data
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+      
+      console.log('Uploading to Cloudinary...');
+      console.log('URL:', `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`);
+      
+      // Upload to Cloudinary
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+      
+      console.log('Upload response status:', res.status);
+      const data = await res.json();
+      console.log('Upload response:', data);
+      
+      if (!data.secure_url) {
+        console.error('Upload failed:', data);
+        throw new Error(data.error?.message || 'Upload failed');
+      }
+      
+      // Determine message type
+      let messageType = 'file';
+      if (file.type.startsWith('image/')) messageType = 'image';
+      else if (file.type.startsWith('video/')) messageType = 'video';
+      
+      console.log('Sending message with type:', messageType, 'and URL:', data.secure_url);
+      
+      // Send message with mediaUrl
+      if (socket) {
+        socket.emit('send_message', {
+          chatId,
+          content: file.name,
+          messageType,
+          mediaUrl: data.secure_url,
+        });
+      }
+    } catch (err: any) {
+      console.error('Upload error:', err);
+      setUploadError(err.message || 'Upload failed');
+    } finally {
+      setUploading(false);
+    }
+  };
 
   // Find the chat object
   const chat = chats.find((c) => c._id === chatId);
@@ -204,6 +283,18 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
                   {msg.sender?.username || 'Unknown User'}
                 </div>
               )}
+              {/* Media rendering */}
+              {msg.messageType === 'image' && msg.mediaUrl && (
+                <img src={msg.mediaUrl} alt={msg.content || 'image'} className="rounded-xl mb-1 max-h-60 object-contain bg-black" style={{ maxWidth: '320px' }} />
+              )}
+              {msg.messageType === 'video' && msg.mediaUrl && (
+                <video src={msg.mediaUrl} controls className="rounded-xl mb-1 bg-black" style={{ width: '320px', height: '180px', objectFit: 'cover' }} />
+              )}
+              {msg.messageType === 'file' && msg.mediaUrl && (
+                <a href={msg.mediaUrl} target="_blank" rel="noopener noreferrer" className="text-blue-400 underline mb-1 break-all">
+                  {msg.content || 'Download file'}
+                </a>
+              )}
               <div
                 className={`px-4 py-2 rounded-2xl shadow text-sm ${
                   msg.sender?._id === user?._id
@@ -211,7 +302,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
                     : 'bg-gray-700 text-gray-100 rounded-bl-none'
                 }`}
               >
-                <div>{msg.content}</div>
+                {/* Only show text if not a file-only message */}
+                {(!msg.mediaUrl || msg.messageType === 'text') && <div>{msg.content}</div>}
                 <div className={`text-xs mt-1 text-right ${
                   msg.sender?._id === user?._id 
                     ? 'text-blue-100' 
@@ -226,7 +318,21 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
         <div ref={messagesEndRef} />
       </div>
       <form onSubmit={handleSend} className="bg-gray-900 flex items-center space-x-2 px-2 py-2 rounded-b-2xl sticky bottom-0 z-20">
-        <button className="p-2 rounded-full hover:bg-gray-800 transition" type="button" disabled>
+        <input
+          type="file"
+          ref={fileInputRef}
+          style={{ display: 'none' }}
+          accept="image/*,video/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/zip,application/x-rar-compressed,application/octet-stream"
+          onChange={handleFileChange}
+          disabled={uploading}
+        />
+        <button
+          className="p-2 rounded-full hover:bg-gray-800 transition"
+          type="button"
+          onClick={handleFileButtonClick}
+          disabled={uploading}
+          aria-label="Attach file"
+        >
           <FiPaperclip size={22} className="text-gray-400" />
         </button>
         <input
@@ -235,10 +341,13 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
           onChange={(e) => setInput(e.target.value)}
           placeholder="Type your message..."
           className="flex-1 px-4 py-2 rounded-full bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+          disabled={uploading}
         />
-        <button className="p-2 rounded-full bg-blue-500 hover:bg-blue-600 transition flex items-center justify-center" type="submit">
+        <button className="p-2 rounded-full bg-blue-500 hover:bg-blue-600 transition flex items-center justify-center" type="submit" disabled={uploading}>
           <FiSend size={22} className="text-white" />
         </button>
+        {uploading && <span className="ml-2 text-blue-400 text-xs">Uploading...</span>}
+        {uploadError && <span className="ml-2 text-red-400 text-xs">{uploadError}</span>}
       </form>
       {/* Edit group modal: admin can edit, others see members list */}
       {showEditModal && (
