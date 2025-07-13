@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { authAPI, chatAPI } from '../utils/api';
 import { useChatContext } from '../contexts/ChatContext';
+import LoadingSpinner from './LoadingSpinner';
 
 interface NewChatModalProps {
   open: boolean;
@@ -86,7 +87,11 @@ const NewChatModal: React.FC<NewChatModalProps> = ({ open, onClose, onChatCreate
           placeholder="Search users by username..."
           autoFocus
         />
-        {loading && <div className="text-gray-400 text-center mb-2">Searching...</div>}
+        {loading && (
+          <div className="text-center mb-2">
+            <LoadingSpinner size="sm" text="Searching..." showLogo={false} />
+          </div>
+        )}
         {error && <div className="text-red-400 text-center mb-2">{error}</div>}
         {info && <div className="text-blue-400 text-center mb-2">{info}</div>}
         <div className="max-h-60 overflow-y-auto">

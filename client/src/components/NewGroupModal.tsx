@@ -3,6 +3,7 @@ import { chatAPI, authAPI } from '../utils/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useChatContext } from '../contexts/ChatContext';
 import ImageCropModal from './ImageCropModal';
+import LoadingSpinner from './LoadingSpinner';
 
 interface NewGroupModalProps {
   open: boolean;
@@ -187,7 +188,11 @@ const NewGroupModal: React.FC<NewGroupModalProps> = ({ open, onClose, onGroupCre
           className="w-full px-4 py-2 rounded-lg bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2"
           placeholder="Search users to add..."
         />
-        {loading && <div className="text-gray-400 text-center mb-2">Searching...</div>}
+        {loading && (
+          <div className="text-center mb-2">
+            <LoadingSpinner size="sm" text="Searching..." showLogo={false} />
+          </div>
+        )}
         {error && <div className="text-red-400 text-center mb-2">{error}</div>}
         {info && <div className="text-blue-400 text-center mb-2">{info}</div>}
         <div className="flex flex-wrap gap-2 mb-2">

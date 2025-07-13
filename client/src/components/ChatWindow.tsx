@@ -7,17 +7,27 @@ import { authAPI } from '../utils/api';
 import { FiSend, FiPaperclip } from 'react-icons/fi';
 import { FiMoreVertical } from 'react-icons/fi';
 import ImageCropModal from './ImageCropModal';
+import { uploadToCloudinary } from '../utils/cloudinary';
+
+// SVGs for ticks
+const SingleTick = () => (
+  <svg width="18" height="18" viewBox="0 0 20 20" fill="none" className="inline align-middle" style={{marginLeft: 2}}><path d="M5 10.5L9 14.5L15 7.5" stroke="#a3a3a3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+);
+const DoubleTickGray = () => (
+  <svg width="18" height="18" viewBox="0 0 20 20" fill="none" className="inline align-middle" style={{marginLeft: 2}}><path d="M3.5 11.5L7.5 15.5L13.5 8.5" stroke="#a3a3a3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M8.5 11.5L12.5 15.5L18.5 8.5" stroke="#a3a3a3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+);
+const DoubleTickGreen = () => (
+  <svg width="18" height="18" viewBox="0 0 20 20" fill="none" className="inline align-middle" style={{marginLeft: 2}}>
+    <path d="M3.5 11.5L7.5 15.5L13.5 8.5" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M8.5 11.5L12.5 15.5L18.5 8.5" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
 
 interface ChatWindowProps {
   chatId: string;
   onBack?: () => void;
 }
 
-const CLOUDINARY_CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
-const CLOUDINARY_UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
-
-console.log('Cloudinary Cloud Name:', CLOUDINARY_CLOUD_NAME);
-console.log('Cloudinary Upload Preset:', CLOUDINARY_UPLOAD_PRESET);
 console.log('All env vars:', import.meta.env);
 
 const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
@@ -44,7 +54,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
   const [selectedMedia, setSelectedMedia] = useState<{ type: string; url: string; name: string } | null>(null);
-  const [pendingImages, setPendingImages] = useState<Array<{ content: string; messageType: string; mediaUrl: string }>>([]);
+  const [pendingFiles, setPendingFiles] = useState<Array<{ content: string; messageType: string; mediaUrl: string }>>([]);
+  const [enlargedProfileImage, setEnlargedProfileImage] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -52,105 +63,36 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
     if (fileInputRef.current) fileInputRef.current.value = '';
     fileInputRef.current?.click();
   };
-
+  // for file transfer
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
-    
-    console.log('Files selected:', files.length, 'files');
-    console.log('Upload preset:', CLOUDINARY_UPLOAD_PRESET);
-    console.log('Cloud name:', CLOUDINARY_CLOUD_NAME);
-    
-    if (!CLOUDINARY_UPLOAD_PRESET) {
-      setUploadError('Upload preset not configured');
-      return;
-    }
     
     setUploading(true);
     setUploadError('');
     
     try {
-      // Upload all files
       const uploadPromises = files.map(async (file) => {
-        console.log('Uploading file:', file.name, file.type);
-        
-        // Prepare form data
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-        
-        // Upload to Cloudinary
-        const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`, {
-          method: 'POST',
-          body: formData,
-        });
-        
-        console.log('Upload response status for', file.name, ':', res.status);
-        const data = await res.json();
-        console.log('Upload response for', file.name, ':', data);
-        
-        if (!data.secure_url) {
-          throw new Error(`Upload failed for ${file.name}: ${data.error?.message || 'Upload failed'}`);
-        }
-        
-        // Determine message type
+        let mediaUrl = await uploadToCloudinary(file);
         let messageType = 'file';
         if (file.type.startsWith('image/')) messageType = 'image';
         else if (file.type.startsWith('video/')) messageType = 'video';
-        
         return {
           content: file.name,
           messageType,
-          mediaUrl: data.secure_url,
+          mediaUrl,
         };
       });
       
-      // Wait for all uploads to complete
       const uploadedFiles = await Promise.all(uploadPromises);
-      console.log('All files uploaded successfully:', uploadedFiles.length);
       
-      // Group images and send other files separately
       const images = uploadedFiles.filter(file => file.messageType === 'image');
       const otherFiles = uploadedFiles.filter(file => file.messageType !== 'image');
       
-      // Send images as a group if there are multiple
-      if (images.length > 1) {
-        // Store images temporarily to group them
-        setPendingImages(images);
-        
-        // Send as a single grouped message
-        if (socket) {
-          socket.emit('send_message', {
-            chatId,
-            content: `Multiple images (${images.length})`,
-            messageType: 'image_group',
-            mediaUrls: images.map(img => img.mediaUrl),
-            imageCount: images.length
-          });
-        }
-      } else if (images.length === 1) {
-        // Send single image normally
-        if (socket) {
-          socket.emit('send_message', {
-            chatId,
-            ...images[0],
-          });
-        }
-      }
+      // Store uploaded files instead of sending them immediately
+      setPendingFiles(prev => [...prev, ...uploadedFiles]);
       
-      // Send other files (videos, documents) separately
-      if (socket) {
-        otherFiles.forEach((fileData) => {
-          socket.emit('send_message', {
-            chatId,
-            ...fileData,
-          });
-        });
-      }
-      
-      console.log('All messages sent successfully');
     } catch (err: any) {
-      console.error('Upload error:', err);
       setUploadError(err.message || 'Upload failed');
     } finally {
       setUploading(false);
@@ -309,15 +251,83 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // Mark messages as read when chat is opened or new messages arrive
+  useEffect(() => {
+    if (!user || !messages.length || !socket) return;
+    const unreadMsgIds = messages
+      .filter(msg => !msg.readBy?.includes(user._id) && msg.sender?._id !== user._id)
+      .map(msg => msg._id);
+    if (unreadMsgIds.length > 0) {
+      socket.emit('mark_as_read', { chatId, messageIds: unreadMsgIds });
+    }
+  }, [messages, user, socket, chatId]);
+
+  // Listen for real-time read receipt updates
+  useEffect(() => {
+    if (!socket) return;
+    const handleMessagesRead = ({ messageIds, userId }: { messageIds: string[]; userId: string }) => {
+      setMessages(prevMsgs => prevMsgs.map(msg =>
+        messageIds.includes(msg._id) && !msg.readBy.includes(userId)
+          ? { ...msg, readBy: [...msg.readBy, userId] }
+          : msg
+      ));
+    };
+    socket.on('messages_read', handleMessagesRead);
+    return () => { socket.off('messages_read', handleMessagesRead); };
+  }, [socket]);
+
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || !socket) return;
-    socket.emit('send_message', {
-      chatId,
-      content: input,
-      messageType: 'text'
-    });
-    setInput('');
+    if ((!input.trim() && pendingFiles.length === 0) || !socket) return;
+    
+    // Send text message if there's text
+    if (input.trim()) {
+      socket.emit('send_message', {
+        chatId,
+        content: input,
+        messageType: 'text'
+      });
+      setInput('');
+    }
+    
+    // Send pending files
+    if (pendingFiles.length > 0) {
+      const images = pendingFiles.filter(file => file.messageType === 'image');
+      const otherFiles = pendingFiles.filter(file => file.messageType !== 'image');
+      
+      // Send multiple images as a group
+      if (images.length > 1) {
+        socket.emit('send_message', {
+          chatId,
+          content: `Multiple images (${images.length})`,
+          messageType: 'image_group',
+          mediaUrls: images.map(img => img.mediaUrl),
+          imageCount: images.length
+        });
+      } else if (images.length === 1) {
+        // Send single image
+        socket.emit('send_message', {
+          chatId,
+          ...images[0],
+        });
+      }
+      
+      // Send other files (videos, documents) separately
+      otherFiles.forEach((fileData) => {
+        socket.emit('send_message', {
+          chatId,
+          ...fileData,
+        });
+      });
+      
+      // Clear pending files
+      setPendingFiles([]);
+    }
+  };
+
+  // Remove a pending file
+  const removePendingFile = (index: number) => {
+    setPendingFiles(prev => prev.filter((_, i) => i !== index));
   };
 
   return (
@@ -335,24 +345,36 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
         
         {/* Profile picture and name */}
         <div className="flex items-center space-x-3 flex-1">
-          <div className="w-10 h-10 bg-gradient-to-br from-gray-700 to-gray-800 rounded-full flex items-center justify-center text-base font-bold overflow-hidden">
+          <div
+            className={
+              "w-10 h-10 bg-gradient-to-br from-gray-700 to-gray-800 rounded-full flex items-center justify-center text-base font-bold overflow-hidden" +
+              ((isGroup && chat?.groupIcon) || (!isGroup && chat?.users?.find((u: any) => u._id !== user?._id)?.profilePicture)
+                ? " cursor-pointer hover:opacity-80"
+                : "")
+            }
+            onClick={() => {
+              if (isGroup && chat?.groupIcon) setEnlargedProfileImage(chat.groupIcon);
+              else if (!isGroup) {
+                const receiver = chat?.users?.find((u: any) => u._id !== user?._id);
+                if (receiver?.profilePicture) setEnlargedProfileImage(receiver.profilePicture);
+              }
+            }}
+          >
             {isGroup ? (
-              // Group chat - show group icon or first letter
               chat?.groupIcon ? (
-                <img 
-                  src={chat.groupIcon} 
-                  alt={displayName || 'Group'} 
+                <img
+                  src={chat.groupIcon}
+                  alt={displayName || 'Group'}
                   className="w-full h-full object-cover"
                 />
               ) : (
                 displayName[0]?.toUpperCase() || 'G'
               )
             ) : (
-              // Individual chat - show receiver's profile picture or first letter
               chat?.users?.find((u: any) => u._id !== user?._id)?.profilePicture ? (
-                <img 
-                  src={chat.users.find((u: any) => u._id !== user?._id)?.profilePicture} 
-                  alt={displayName || 'Profile'} 
+                <img
+                  src={chat.users.find((u: any) => u._id !== user?._id)?.profilePicture}
+                  alt={displayName || 'Profile'}
                   className="w-full h-full object-cover"
                 />
               ) : (
@@ -389,117 +411,159 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
             </div>
           </div>
         )}
-        {messages.map((msg) => (
-          <div
-            key={msg._id}
-            className={`flex ${msg.sender?._id === user?._id ? 'justify-end' : 'justify-start'}`}
-          >
-            <div className="flex flex-col max-w-xs md:max-w-md">
-              {/* Show sender name and profile picture in group chats for messages from others */}
-              {isGroup && msg.sender?._id !== user?._id && (
-                <div className="flex items-center mb-1 ml-1">
-                  {/* Profile picture */}
-                  <div className="w-6 h-6 rounded-full overflow-hidden mr-2 flex-shrink-0">
-                    {msg.sender?.profilePicture ? (
-                      <img 
-                        src={msg.sender.profilePicture} 
-                        alt={msg.sender.username || 'Profile'} 
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-xs font-bold text-white">
-                        {msg.sender?.username?.[0]?.toUpperCase() || 'U'}
-                      </div>
-                    )}
-                  </div>
-                  {/* Sender name */}
-                  <div className="text-xs text-gray-400 font-medium">
-                    {msg.sender?.username || 'Unknown User'}
-                  </div>
-                </div>
-              )}
-              {/* Media rendering */}
-              {msg.messageType === 'image' && msg.mediaUrl && (
-                <img 
-                  src={msg.mediaUrl} 
-                  alt={msg.content || 'image'} 
-                  className="rounded-xl mb-1 max-h-60 object-contain bg-black cursor-pointer hover:opacity-80 transition-opacity" 
-                  style={{ maxWidth: '320px' }}
-                  onClick={() => setSelectedMedia({ type: 'image', url: msg.mediaUrl, name: msg.content || 'Image' })}
-                />
-              )}
-              
-              {/* Grouped images rendering */}
-              {msg.messageType === 'image_group' && msg.mediaUrls && (
-                <div className="grid grid-cols-2 gap-1 mb-1" style={{ maxWidth: '320px' }}>
-                  {msg.mediaUrls.slice(0, 4).map((url: string, index: number) => (
-                    <div key={index} className="relative">
-                      <img 
-                        src={url} 
-                        alt={`Image ${index + 1}`}
-                        className={`rounded-lg object-cover bg-black cursor-pointer hover:opacity-80 transition-opacity ${
-                          msg.mediaUrls.length === 1 ? 'col-span-2' : 
-                          msg.mediaUrls.length === 2 ? 'h-32' : 'h-24'
-                        }`}
-                        onClick={() => setSelectedMedia({ type: 'image', url, name: `Image ${index + 1}` })}
-                      />
-                      {/* Show +X indicator for additional images */}
-                      {index === 3 && msg.mediaUrls.length > 4 && (
-                        <div className="absolute inset-0 bg-black/70 rounded-lg flex items-center justify-center">
-                          <span className="text-white font-bold text-lg">
-                            +{msg.mediaUrls.length - 4}
-                          </span>
+        {messages.map((msg) => {
+          // Read receipt logic
+          let tickIcon = null;
+          if (user && msg.sender?._id === user._id) {
+            if (isGroup) {
+              const otherUserIds = chat.users.filter((u: any) => u._id !== user._id).map((u: any) => u._id);
+              const allRead = otherUserIds.every((uid: string) => msg.readBy?.includes(uid));
+              if (allRead && otherUserIds.length > 0) tickIcon = <DoubleTickGreen />;
+              else if ((msg.readBy?.filter((uid: string) => otherUserIds.includes(uid)).length || 0) > 0) tickIcon = <DoubleTickGray />;
+              else tickIcon = <SingleTick />;
+            } else {
+              const receiver = chat.users.find((u: any) => u._id !== user._id);
+              if (receiver && msg.readBy?.includes(receiver._id)) tickIcon = <DoubleTickGreen />;
+              else if ((msg.readBy?.length || 0) > 0) tickIcon = <DoubleTickGray />;
+              else tickIcon = <SingleTick />;
+            }
+          }
+          return (
+            <div
+              key={msg._id}
+              className={`flex ${msg.sender?._id === user?._id ? 'justify-end' : 'justify-start'}`}
+            >
+              <div className="flex flex-col max-w-xs md:max-w-md">
+                {/* Show sender name and profile picture in group chats for messages from others */}
+                {isGroup && msg.sender?._id !== user?._id && (
+                  <div className="flex items-center mb-1 ml-1">
+                    {/* Profile picture */}
+                    <div className="w-6 h-6 rounded-full overflow-hidden mr-2 flex-shrink-0">
+                      {msg.sender?.profilePicture ? (
+                        <img 
+                          src={msg.sender.profilePicture} 
+                          alt={msg.sender.username || 'Profile'} 
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-xs font-bold text-white">
+                          {msg.sender?.username?.[0]?.toUpperCase() || 'U'}
                         </div>
                       )}
                     </div>
-                  ))}
-                </div>
-              )}
-              {msg.messageType === 'video' && msg.mediaUrl && (
-                <video 
-                  src={msg.mediaUrl} 
-                  controls 
-                  className="rounded-xl mb-1 bg-black cursor-pointer hover:opacity-80 transition-opacity" 
-                  style={{ width: '320px', height: '180px', objectFit: 'cover' }}
-                  onClick={() => setSelectedMedia({ type: 'video', url: msg.mediaUrl, name: msg.content || 'Video' })}
-                />
-              )}
-              {msg.messageType === 'file' && msg.mediaUrl && (
-                <div 
-                  className="text-blue-400 underline mb-1 break-all cursor-pointer hover:text-blue-300 transition-colors"
-                  onClick={() => {
-                    if (msg.content?.toLowerCase().includes('.pdf')) {
-                      setSelectedMedia({ type: 'pdf', url: msg.mediaUrl, name: msg.content || 'PDF' });
-                    } else {
-                      window.open(msg.mediaUrl, '_blank');
-                    }
-                  }}
+                    {/* Sender name */}
+                    <div className="text-xs text-gray-400 font-medium">
+                      {msg.sender?.username || 'Unknown User'}
+                    </div>
+                  </div>
+                )}
+                {/* Media rendering */}
+                {msg.messageType === 'image' && msg.mediaUrl && (
+                  <img 
+                    src={msg.mediaUrl} 
+                    alt={msg.content || 'image'} 
+                    className="rounded-xl mb-1 max-h-60 object-contain bg-black cursor-pointer hover:opacity-80 transition-opacity" 
+                    style={{ maxWidth: '320px' }}
+                    onClick={() => setSelectedMedia({ type: 'image', url: msg.mediaUrl, name: msg.content || 'Image' })}
+                  />
+                )}
+                
+                {/* Grouped images rendering */}
+                {msg.messageType === 'image_group' && msg.mediaUrls && (
+                  <div className="grid grid-cols-2 gap-1 mb-1" style={{ maxWidth: '320px' }}>
+                    {msg.mediaUrls.slice(0, 4).map((url: string, index: number) => (
+                      <div key={index} className="relative">
+                        <img 
+                          src={url} 
+                          alt={`Image ${index + 1}`}
+                          className={`rounded-lg object-cover bg-black cursor-pointer hover:opacity-80 transition-opacity ${
+                            msg.mediaUrls.length === 1 ? 'col-span-2' : 
+                            msg.mediaUrls.length === 2 ? 'h-32' : 'h-24'
+                          }`}
+                          onClick={() => setSelectedMedia({ type: 'image', url, name: `Image ${index + 1}` })}
+                        />
+                        {/* Show +X indicator for additional images */}
+                        {index === 3 && msg.mediaUrls.length > 4 && (
+                          <div className="absolute inset-0 bg-black/70 rounded-lg flex items-center justify-center">
+                            <span className="text-white font-bold text-lg">
+                              +{msg.mediaUrls.length - 4}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {msg.messageType === 'video' && msg.mediaUrl && (
+                  <video 
+                    src={msg.mediaUrl} 
+                    controls 
+                    className="rounded-xl mb-1 bg-black cursor-pointer hover:opacity-80 transition-opacity" 
+                    style={{ width: '320px', height: '180px', objectFit: 'cover' }}
+                    onClick={() => setSelectedMedia({ type: 'video', url: msg.mediaUrl, name: msg.content || 'Video' })}
+                  />
+                )}
+                {msg.messageType === 'file' && msg.mediaUrl && (
+                  <div 
+                    className="text-blue-400 underline mb-1 break-all cursor-pointer hover:text-blue-300 transition-colors"
+                    onClick={() => {
+                      if (msg.content?.toLowerCase().includes('.pdf')) {
+                        setSelectedMedia({ type: 'pdf', url: msg.mediaUrl, name: msg.content || 'PDF' });
+                      } else {
+                        window.open(msg.mediaUrl, '_blank');
+                      }
+                    }}
+                  >
+                    {msg.content || 'Download file'}
+                  </div>
+                )}
+                <div
+                  className={`px-4 py-2 rounded-2xl shadow text-sm ${
+                    msg.sender?._id === user?._id
+                      ? 'bg-blue-500 text-white rounded-br-none'
+                      : 'bg-gray-700 text-gray-100 rounded-bl-none'
+                  } max-w-[80vw] break-words whitespace-pre-wrap`}
                 >
-                  {msg.content || 'Download file'}
-                </div>
-              )}
-              <div
-                className={`px-4 py-2 rounded-2xl shadow text-sm ${
-                  msg.sender?._id === user?._id
-                    ? 'bg-blue-500 text-white rounded-br-none'
-                    : 'bg-gray-700 text-gray-100 rounded-bl-none'
-                }`}
-              >
-                {/* Only show text if not a file-only message */}
-                {(!msg.mediaUrl || msg.messageType === 'text') && <div>{msg.content}</div>}
-                <div className={`text-xs mt-1 text-right ${
-                  msg.sender?._id === user?._id 
-                    ? 'text-blue-100' 
-                    : 'text-gray-300'
-                }`}>
-                  {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  {/* Only show text if not a file-only message */}
+                  {(!msg.mediaUrl || msg.messageType === 'text') && (
+                    <div>{msg.content}</div>
+                  )}
+                  <div className={`text-xs mt-1 text-right ${
+                    msg.sender?._id === user?._id 
+                      ? 'text-blue-100' 
+                      : 'text-gray-300'
+                  } flex items-center justify-end`}>
+                    {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    {/* Read receipt ticks for my messages */}
+                    {msg.sender?._id === user?._id && tickIcon}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
         <div ref={messagesEndRef} />
       </div>
+      {/* Pending files preview */}
+      {pendingFiles.length > 0 && (
+        <div className="bg-gray-900 px-4 py-2 border-t border-gray-800">
+          <div className="text-xs text-gray-400 mb-2">Pending files ({pendingFiles.length}):</div>
+          <div className="flex flex-wrap gap-2">
+            {pendingFiles.map((file, index) => (
+              <div key={index} className="flex items-center bg-gray-800 rounded-lg px-3 py-1 text-sm">
+                <span className="text-white truncate max-w-32">{file.content}</span>
+                <button
+                  onClick={() => removePendingFile(index)}
+                  className="ml-2 text-red-400 hover:text-red-600 text-lg font-bold"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      
       <form onSubmit={handleSend} className="bg-gray-900 flex items-center space-x-2 px-2 py-2 rounded-b-2xl sticky bottom-0 z-20">
         <input
           type="file"
@@ -519,18 +583,29 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
         >
           <FiPaperclip size={22} className="text-gray-400" />
         </button>
-        <input
-          type="text"
+        <textarea
           value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Type your message..."
-          className="flex-1 px-4 py-2 rounded-full bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+          onChange={e => setInput(e.target.value)}
+          placeholder={pendingFiles.length > 0 ? "Type your message or press Enter to send files..." : "Type your message..."}
+          className="flex-1 px-4 py-2 rounded-full bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition resize-none min-h-[40px] max-h-[40px] h-10 overflow-y-auto"
           disabled={uploading}
+          onKeyDown={e => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              handleSend(e);
+            }
+          }}
         />
-        <button className="p-2 rounded-full bg-blue-500 hover:bg-blue-600 transition flex items-center justify-center" type="submit" disabled={uploading}>
+        <button 
+          className={`p-2 rounded-full transition flex items-center justify-center ${
+            (input.trim() || pendingFiles.length > 0) ? 'bg-blue-500 hover:bg-blue-600' : 'bg-gray-600 cursor-not-allowed'
+          }`} 
+          type="submit" 
+          disabled={uploading || (!input.trim() && pendingFiles.length === 0)}
+        >
           <FiSend size={22} className="text-white" />
         </button>
-        {uploading && <span className="ml-2 text-blue-400 text-xs">Uploading multiple files...</span>}
+        {uploading && <span className="ml-2 text-blue-400 text-xs">Uploading...</span>}
         {uploadError && <span className="ml-2 text-red-400 text-xs">{uploadError}</span>}
       </form>
       {/* Edit group modal: admin can edit, others see members list */}
@@ -714,6 +789,25 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
         selectedImage={selectedGroupIconImage}
         uploading={uploadingGroupIcon}
       />
+
+      {/* Enlarged Profile/Group Image Modal */}
+      {enlargedProfileImage && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm">
+          <div className="relative">
+            <img
+              src={enlargedProfileImage}
+              alt="Enlarged"
+              className="max-w-[60vw] max-h-[60vh] rounded-2xl shadow-2xl"
+            />
+            <button
+              onClick={() => setEnlargedProfileImage(null)}
+              className="absolute top-2 right-2 text-white text-3xl font-bold bg-black/60 rounded-full w-10 h-10 flex items-center justify-center"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

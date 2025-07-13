@@ -1,6 +1,7 @@
 import React from 'react';
 import { useChatContext } from '../contexts/ChatContext';
 import { useAuth } from '../contexts/AuthContext';
+import LoadingSpinner from './LoadingSpinner';
 
 interface SidebarProps {
   onSelectChat?: (id: string) => void;
@@ -35,7 +36,9 @@ const Sidebar: React.FC<SidebarProps> = ({ onSelectChat, selectedChatId }) => {
         </div>
         
         {loading ? (
-          <div className="text-center text-gray-400 py-8">Loading chats...</div>
+          <div className="text-center py-8">
+            <LoadingSpinner size="sm" text="Loading chats..." showLogo={false} />
+          </div>
         ) : chats.length === 0 ? (
           <div className="text-center text-gray-400 py-8">No chats found.</div>
         ) : (

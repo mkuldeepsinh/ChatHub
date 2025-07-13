@@ -96,6 +96,11 @@ export const chatAPI = {
   markAsRead: async (chatId: string) => {
     const response = await api.put('/message/read', { chatId });
     return response.data;
+  },
+
+  markMessagesAsRead: async (messageIds: string[]) => {
+    const response = await api.put('/message/read', { messageIds });
+    return response.data;
   }
 };
 

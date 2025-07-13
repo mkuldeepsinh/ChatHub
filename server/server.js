@@ -23,7 +23,7 @@ app.use(express.json());
 app.use(cookieParser());
 
 app.use(cors({
-    origin: "http://localhost:5173", // Frontend URL
+    origin: process.env.FRONTEND_URL, // Frontend URL
     credentials: true, // Allow cookies
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization", "token"]
@@ -38,8 +38,8 @@ const server = http.createServer(app);
 // Initialize Socket.IO server
 const io = new SocketIOServer(server, {
     cors: {
-        origin: "http://localhost:5173", // <-- MUST MATCH YOUR FRONTEND
-        credentials: true,               // <-- ADD THIS LINE
+        origin: process.env.FRONTEND_URL, //  FRONTEND
+        credentials: true,          
         methods: ["GET", "POST", "PUT", "DELETE"]
     }
 });
@@ -165,6 +165,7 @@ io.on("connection", async (socket) => {
                 user: socket.user
             };
             const res = {
+                statusCode: 201,
                 status: function(code) {
                     this.statusCode = code;
                     return this;
@@ -201,11 +202,12 @@ io.on("connection", async (socket) => {
                 user: socket.user
             };
             const res = {
+                statusCode: 200,
                 status: function(code) {
                     this.statusCode = code;
                     return this;
                 },
-                json: (result) => {
+                json: function(result) {
                     if (this.statusCode === 200) {
                         emitToChat(chatId, "messages_read", { messageIds, userId: socket.user._id });
                     } else {
