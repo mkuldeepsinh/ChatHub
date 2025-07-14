@@ -13,23 +13,27 @@ const Sidebar: React.FC<SidebarProps> = ({ onSelectChat, selectedChatId }) => {
   const { user } = useAuth();
 
   return (
-    <aside className="flex flex-col w-full md:w-90 h-screen bg-gray-900 text-white shadow-2xl rounded-bl-2xl rounded-tr-none rounded-tl-none p-2 transition-all duration-300 z-30">
-      <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900">
+    <aside
+      className="flex flex-col w-full md:w-90 h-screen bg-[var(--sidebar)] text-[var(--sidebar-foreground)] shadow-2xl rounded-bl-2xl rounded-tr-none rounded-tl-none p-2 transition-all duration-300 z-30"
+    >
+      <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-[var(--sidebar-border)] scrollbar-track-[var(--sidebar)]">
         {/* Fake ChatHub chat always at top */}
-        <div className="flex items-center space-x-3 p-3 mb-2 rounded-xl cursor-pointer transition-all duration-200 hover:bg-gray-800 bg-gray-800">
-          <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-blue-800 rounded-full flex items-center justify-center text-lg font-bold">
+        <div
+          className="flex items-center space-x-3 p-3 mb-2 rounded-xl cursor-pointer transition-all duration-200 hover:bg-[var(--sidebar-accent)] bg-[var(--sidebar-accent)]"
+        >
+          <div className="w-12 h-12 bg-gradient-to-br from-[var(--sidebar-primary)] to-[var(--sidebar-accent)] rounded-full flex items-center justify-center text-lg font-bold">
             C
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex justify-between items-center">
-              <span className="font-semibold truncate text-blue-400">
+              <span className="font-semibold truncate text-[var(--sidebar-primary)]">
                 ChatHub
               </span>
-              <span className="text-xs text-gray-400 ml-2 whitespace-nowrap">
+              <span className="text-xs text-[var(--sidebar-border)] ml-2 whitespace-nowrap">
                 Always Online
               </span>
             </div>
-            <div className="text-sm text-gray-300 truncate">
+            <div className="text-sm text-[var(--sidebar-foreground)]/70 truncate">
               Welcome to ChatHub! Start chatting with friends.
             </div>
           </div>
@@ -40,7 +44,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onSelectChat, selectedChatId }) => {
             <LoadingSpinner size="sm" text="Loading chats..." showLogo={false} />
           </div>
         ) : chats.length === 0 ? (
-          <div className="text-center text-gray-400 py-8">No chats found.</div>
+          <div className="text-center text-[var(--sidebar-border)] py-8">No chats found.</div>
         ) : (
           chats.map((chat) => {
             const receiver = !chat.isGroup && Array.isArray(chat.users)
@@ -52,12 +56,12 @@ const Sidebar: React.FC<SidebarProps> = ({ onSelectChat, selectedChatId }) => {
             return (
               <div
                 key={chat._id || chat.id || Math.random()}
-                className={`flex items-center space-x-3 p-3 mb-2 rounded-xl cursor-pointer transition-all duration-200 hover:bg-gray-800 ${
-                  selectedChatId === chat._id ? 'bg-gray-800' : ''
+                className={`flex items-center space-x-3 p-3 mb-2 rounded-xl cursor-pointer transition-all duration-200 hover:bg-[var(--sidebar-accent)] ${
+                  selectedChatId === chat._id ? 'bg-[var(--sidebar-accent)]' : ''
                 }`}
                 onClick={() => onSelectChat && onSelectChat(chat._id)}
               >
-                <div className="w-12 h-12 bg-gradient-to-br from-gray-700 to-gray-800 rounded-full flex items-center justify-center text-lg font-bold overflow-hidden">
+                <div className="w-12 h-12 bg-gradient-to-br from-[var(--sidebar-primary)] to-[var(--sidebar-accent)] rounded-full flex items-center justify-center text-lg font-bold overflow-hidden">
                   {chat.isGroup ? (
                     // Group chat - show group icon or first letter
                     chat.groupIcon ? (
@@ -83,17 +87,17 @@ const Sidebar: React.FC<SidebarProps> = ({ onSelectChat, selectedChatId }) => {
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex justify-between items-center text-blue-400">
+                  <div className="flex justify-between items-center text-[var(--sidebar-primary)]">
                     <span className="font-semibold truncate">
                       {displayName}
                     </span>
-                    <span className="text-xs text-gray-400 ml-2 whitespace-nowrap">
+                    <span className="text-xs text-[var(--sidebar-primary)] ml-2 whitespace-nowrap">
                       {chat.latestMessage?.createdAt
                         ? new Date(chat.latestMessage.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                         : ''}
                     </span>
                   </div>
-                  <div className="text-sm text-gray-300 truncate">
+                  <div className="text-sm text-[var(--sidebar-foreground)]/70 truncate">
                     {chat.latestMessage?.content || ''}
                   </div>
                 </div>

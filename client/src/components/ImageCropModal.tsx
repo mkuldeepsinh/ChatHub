@@ -157,16 +157,16 @@ const ImageCropModal: React.FC<ImageCropModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm">
-      <div className="bg-gray-900 rounded-2xl p-6 max-w-md w-full mx-4">
-        <h3 className="text-xl font-bold text-white mb-4 text-center">{title}</h3>
+      <div className="bg-[var(--background)] rounded-2xl p-6 max-w-md w-full mx-4">
+        <h3 className="text-xl font-bold text-foreground mb-4 text-center">{title}</h3>
         
-        <div className="mb-4 text-center text-gray-300 text-sm">
+        <div className="mb-4 text-center text-muted-foreground text-sm">
           Drag to move the crop area and select the part of the image you want to use
         </div>
         
         <div 
           ref={cropContainerRef}
-          className="relative w-full h-96 bg-gray-800 rounded-lg overflow-hidden mb-4"
+          className="relative w-full h-96 bg-[var(--muted)] rounded-lg overflow-hidden mb-4"
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
@@ -181,7 +181,7 @@ const ImageCropModal: React.FC<ImageCropModalProps> = ({
           
           {/* Crop overlay */}
           <div 
-            className="absolute border-2 border-blue-500 bg-blue-500/20 cursor-move"
+            className="absolute border-2 border-[var(--primary)] bg-[var(--primary)]/20 cursor-move"
             style={{
               left: cropArea.x,
               top: cropArea.y,
@@ -190,21 +190,21 @@ const ImageCropModal: React.FC<ImageCropModalProps> = ({
               borderRadius: '50%'
             }}
           >
-            <div className="absolute inset-0 border-2 border-white rounded-full"></div>
+            <div className="absolute inset-0 border-2 border-foreground rounded-full"></div>
           </div>
         </div>
         
         <div className="flex gap-3">
           <button 
             onClick={handleCropCancel}
-            className="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-semibold py-2 rounded-lg transition"
+            className="flex-1 bg-[var(--muted)] hover:bg-[var(--muted-foreground)]/20 text-[var(--muted-foreground)] font-semibold py-2 rounded-lg transition"
           >
             Cancel
           </button>
           <button 
             onClick={handleCropSave}
             disabled={uploading}
-            className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 rounded-lg transition disabled:opacity-60"
+            className="flex-1 bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-[var(--primary-foreground)] font-semibold py-2 rounded-lg transition disabled:opacity-60"
           >
             {uploading ? 'Saving...' : 'Save'}
           </button>

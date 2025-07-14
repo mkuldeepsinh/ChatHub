@@ -1,6 +1,6 @@
 
 
-import React, {  } from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Login from './components/Auth/Login';
@@ -11,31 +11,7 @@ import { ChatProvider, useChatContext } from './contexts/ChatContext';
 import ChatWindow from './components/ChatWindow';
 import { SocketProvider } from './contexts/SocketContext';
 import LoadingPage from './components/LoadingPage';
-
-
-// Protected Route Component
-const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, loading } = useAuth();
-
-  if (loading) {
-    return <LoadingPage text="Authenticating..." subtitle="Checking your credentials" />;
-  }
-
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
-
-  return <>{children}</>;
-};
-
-// const mockMessages = [
-//   { id: 1, sender: 'Alice', text: 'Hey there! 👋', time: '09:10', isMe: false },
-//   { id: 2, sender: 'Me', text: 'Hi Alice! How are you?', time: '09:11', isMe: true },
-//   { id: 3, sender: 'Alice', text: 'I am good, thanks! What about you?', time: '09:12', isMe: false },
-//   { id: 4, sender: 'Me', text: 'Doing great! Ready for our meeting?', time: '09:13', isMe: true },
-//   { id: 5, sender: 'Alice', text: 'Absolutely! See you soon.', time: '09:14', isMe: false },
- 
-// ];
+import ProtectedRoute from './components/ProtectedRoute';
 
 // Chat Page Component (placeholder for now)
 const ChatPage: React.FC<{ onChatCreated: (id: string) => void; selectedChatId: string | null; setSelectedChatId: (id: string) => void; onSelectChat: (id: string) => void }> = ({  selectedChatId, setSelectedChatId, onSelectChat }) => {
@@ -79,16 +55,16 @@ const ChatPage: React.FC<{ onChatCreated: (id: string) => void; selectedChatId: 
       </div>
     </div>
   ) : (
-    <div className="flex flex-1 items-center justify-center h-full bg-gray-900">
+    <div className="flex flex-1 items-center justify-center h-full bg-[var(--background)]">
       <div className="text-center">
-        <div className="text-3xl font-bold text-white mb-2">Made with <span className="text-white-500">♥</span> by Kuldeepsinh Makwana!</div>
-        <div className="text-gray-400 text-lg">Select a chat to start messaging.</div>
+        <div className="text-3xl font-bold text-foreground mb-2">Made with <span className="text-primary">♥</span> by Kuldeepsinh Makwana!</div>
+        <div className="text-muted-foreground text-lg">Select a chat to start messaging.</div>
       </div>
     </div>
   );
 
   return (
-    <div className="flex h-full bg-gray-900 overflow-hidden">
+    <div className="flex h-full bg-[var(--background)] overflow-hidden">
       {/* Sidebar: show on md+ or when no chat is selected */}
       <div className={`h-full w-full md:w-90 ${selectedChatId ? 'hidden' : 'block'} md:block`}>
         {sidebar}

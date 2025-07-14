@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useChatContext } from '../contexts/ChatContext';
 import ImageCropModal from './ImageCropModal';
 import LoadingSpinner from './LoadingSpinner';
+import { Button } from './ui/button';
 
 interface NewGroupModalProps {
   open: boolean;
@@ -131,17 +132,17 @@ const NewGroupModal: React.FC<NewGroupModalProps> = ({ open, onClose, onGroupCre
       <div className="fixed inset-0 z-40 bg-transparent backdrop-blur-sm transition-all duration-300" onClick={onClose} />
       {/* Modal below navbar, full width, fixed */}
       <div
-        className="bg-gray-900 rounded-2xl shadow-2xl p-6 w-full max-w-md border border-gray-800 mx-auto z-50"
+        className="bg-[var(--card)] rounded-2xl shadow-2xl p-6 w-full max-w-md border border-[var(--border)] mx-auto z-50"
         style={{ position: 'fixed', top: navbarHeight, left: 0, right: 0 }}
       >
-        <button onClick={onClose} className="absolute top-3 right-3 text-gray-400 hover:text-white text-xl">&times;</button>
-        <h2 className="text-xl font-bold text-white mb-4 text-center">Create New Group</h2>
+        <Button onClick={onClose} variant="ghost" className="absolute top-3 right-3 text-muted-foreground text-xl p-0 h-auto w-auto min-w-0 min-h-0">&times;</Button>
+        <h2 className="text-xl font-bold text-[var(--card-foreground)] mb-4 text-center">Create New Group</h2>
         
         {/* Group Icon Section */}
         <div className="mb-4">
-          <label className="block text-gray-300 mb-2">Group Icon (Optional)</label>
+          <label className="block text-muted-foreground mb-2">Group Icon (Optional)</label>
           <div className="flex items-center space-x-4">
-            <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-800 flex items-center justify-center">
+            <div className="w-16 h-16 rounded-full overflow-hidden bg-[var(--muted)] flex items-center justify-center">
               {groupIcon ? (
                 <img 
                   src={groupIcon} 
@@ -149,7 +150,7 @@ const NewGroupModal: React.FC<NewGroupModalProps> = ({ open, onClose, onGroupCre
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg">
+                <div className="w-full h-full bg-gradient-to-br from-[var(--primary)] to-[var(--accent)] flex items-center justify-center text-[var(--primary-foreground)] font-bold text-lg">
                   {groupName?.[0]?.toUpperCase() || 'G'}
                 </div>
               )}
@@ -165,7 +166,7 @@ const NewGroupModal: React.FC<NewGroupModalProps> = ({ open, onClose, onGroupCre
               />
               <label
                 htmlFor="newGroupIconInput"
-                className="block w-full px-4 py-2 rounded-lg bg-gray-800 text-white text-center cursor-pointer hover:bg-gray-700 transition disabled:opacity-60"
+                className="block w-full px-4 py-2 rounded-lg bg-[var(--muted)] text-[var(--muted-foreground)] text-center cursor-pointer hover:bg-[var(--muted-foreground)]/80 transition disabled:opacity-60"
                 style={{ pointerEvents: uploadingIcon || creating ? 'none' : 'auto' }}
               >
                 {uploadingIcon ? 'Uploading...' : groupIcon ? 'Change Icon' : 'Upload Icon'}
@@ -178,14 +179,14 @@ const NewGroupModal: React.FC<NewGroupModalProps> = ({ open, onClose, onGroupCre
           type="text"
           value={groupName}
           onChange={e => setGroupName(e.target.value)}
-          className="w-full px-4 py-2 rounded-lg bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
+          className="w-full px-4 py-2 rounded-lg bg-[var(--muted)] text-[var(--muted-foreground)] placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary mb-4"
           placeholder="Group name..."
         />
         <input
           type="text"
           value={search}
           onChange={handleSearch}
-          className="w-full px-4 py-2 rounded-lg bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2"
+          className="w-full px-4 py-2 rounded-lg bg-[var(--muted)] text-[var(--muted-foreground)] placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary mb-2"
           placeholder="Search users to add..."
         />
         {loading && (
@@ -193,13 +194,13 @@ const NewGroupModal: React.FC<NewGroupModalProps> = ({ open, onClose, onGroupCre
             <LoadingSpinner size="sm" text="Searching..." showLogo={false} />
           </div>
         )}
-        {error && <div className="text-red-400 text-center mb-2">{error}</div>}
-        {info && <div className="text-blue-400 text-center mb-2">{info}</div>}
+        {error && <div className="text-[var(--destructive)] text-center mb-2">{error}</div>}
+        {info && <div className="text-[var(--primary)] text-center mb-2">{info}</div>}
         <div className="flex flex-wrap gap-2 mb-2">
           {selectedUsers.map(u => (
-            <span key={u._id} className="bg-blue-600 text-white px-3 py-1 rounded-full flex items-center">
+            <span key={u._id} className="bg-[var(--primary)] text-[var(--primary-foreground)] px-3 py-1 rounded-full flex items-center">
               {u.username}
-              <button className="ml-2 text-xs" onClick={() => handleRemoveUser(u)}>&times;</button>
+              <Button className="ml-2 text-xs px-1 py-0 h-auto min-h-0 min-w-0" variant="ghost" onClick={() => handleRemoveUser(u)}>&times;</Button>
             </span>
           ))}
         </div>
@@ -207,32 +208,34 @@ const NewGroupModal: React.FC<NewGroupModalProps> = ({ open, onClose, onGroupCre
           {results.map(u => (
             <div
               key={u._id}
-              className="flex items-center space-x-3 p-2 rounded-lg cursor-pointer hover:bg-gray-800 transition mb-1"
+              className="flex items-center space-x-3 p-2 rounded-lg cursor-pointer hover:bg-[var(--muted)] transition mb-1"
               onClick={() => handleSelectUser(u)}
             >
-              <div className="w-8 h-8 bg-gradient-to-br from-gray-700 to-gray-800 rounded-full flex items-center justify-center text-base font-bold">
+              <div className="w-8 h-8 bg-gradient-to-br from-[var(--muted)] to-[var(--accent)] rounded-full flex items-center justify-center text-base font-bold text-[var(--muted-foreground)]">
                 {u.username?.[0]?.toUpperCase() || 'U'}
               </div>
               <div className="flex-1 min-w-0">
-                <div className="font-semibold text-white truncate">{u.username}</div>
-                <div className="text-xs text-gray-400 truncate">{u.email}</div>
+                <div className="font-semibold text-[var(--card-foreground)] truncate">{u.username}</div>
+                <div className="text-xs text-muted-foreground truncate">{u.email}</div>
               </div>
-              <button
-                className="bg-blue-500 text-white px-2 py-1 rounded-lg text-xs font-semibold hover:bg-blue-600 transition"
+              <Button
+                className="px-2 py-1 text-xs font-semibold"
                 disabled={creating}
+                variant="secondary"
               >
                 Add
-              </button>
+              </Button>
             </div>
           ))}
         </div>
-        <button
-          className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 rounded-lg transition disabled:opacity-60"
+        <Button
+          className="w-full font-semibold py-2"
           onClick={handleCreateGroup}
           disabled={creating}
+          variant="primary"
         >
           {creating ? 'Creating...' : 'Create Group'}
-        </button>
+        </Button>
       </div>
 
       {/* Crop Modal */}

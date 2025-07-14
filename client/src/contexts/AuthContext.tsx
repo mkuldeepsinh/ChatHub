@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import type { ReactNode } from 'react';
 import { authAPI } from '../utils/api';
 
 interface User {
@@ -17,7 +16,7 @@ interface AuthContextType {
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   signup: (userData: { username: string; email: string; phone: string; password: string }) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
 }
 
@@ -25,26 +24,20 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
+  if (!context) throw new Error('useAuth must be used within AuthProvider');
   return context;
 };
 
-interface AuthProviderProps {
-  children: ReactNode;
-}
-
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   const checkAuth = async () => {
+    setLoading(true);
     try {
       const userData = await authAPI.getCurrentUser();
       setUser(userData);
-    } catch (error) {
-      console.error('Auth check failed:', error);
+    } catch {
       setUser(null);
     } finally {
       setLoading(false);
@@ -52,48 +45,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const login = async (email: string, password: string) => {
-    try {
-      const response = await authAPI.login({ email, password });
-      setUser(response.user);
-      return response;
-    } catch (error) {
-      throw error;
-    }
+    const response = await authAPI.login({ email, password });
+    setUser(response.user);
   };
 
   const signup = async (userData: { username: string; email: string; phone: string; password: string }) => {
-    try {
-      await authAPI.signup(userData);
-    } catch (error) {
-      throw error;
-    }
+    await authAPI.signup(userData);
   };
 
   const logout = async () => {
-    try {
-      await authAPI.logout();
-    } catch (error) {
-      console.error('Logout error:', error);
-    } finally {
-      setUser(null);
-    }
+    await authAPI.logout();
+    setUser(null);
   };
 
   useEffect(() => {
     checkAuth();
   }, []);
 
-  const value: AuthContextType = {
-    user,
-    loading,
-    login,
-    signup,
-    logout,
-    checkAuth
-  };
-
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider value={{ user, loading, login, signup, logout, checkAuth }}>
       {children}
     </AuthContext.Provider>
   );

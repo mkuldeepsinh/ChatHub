@@ -4,47 +4,35 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const api = axios.create({
   baseURL: API_BASE_URL,
-  withCredentials: true, // This allows cookies to be sent with requests
+  withCredentials: true, // Send cookies!
 });
 
-// Response interceptor to handle errors
+// No redirect on 401! Let React Router handle it.
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      // Token expired or invalid, redirect to login
-      window.location.href = '/login';
-    }
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-// Auth API functions
 export const authAPI = {
   signup: async (userData: { username: string; email: string; phone: string; password: string }) => {
     const response = await api.post('/user/signup', userData);
     return response.data;
   },
-
   login: async (credentials: { email: string; password: string }) => {
     const response = await api.post('/user/login', credentials);
     return response.data;
   },
-
   logout: async () => {
     await api.post('/user/logout');
   },
-
   getCurrentUser: async () => {
     const response = await api.get('/user/me');
     return response.data;
   },
-
   searchUsers: async (username: string) => {
     const response = await api.get(`/user/search?username=${username}`);
     return response.data;
   },
-
   updateUser: async (userData: any) => {
     const response = await api.put('/user/update', userData);
     return response.data;

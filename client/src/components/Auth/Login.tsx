@@ -1,13 +1,19 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 
 const Login = () => {
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const { login, user } = useAuth();
   const navigate = useNavigate();
-  const { login } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      navigate('/chat');
+    }
+  }, [user, navigate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -19,7 +25,7 @@ const Login = () => {
     setError('');
     try {
       await login(formData.email, formData.password);
-      navigate('/chat');
+      // Redirect handled by useEffect
     } catch (err: any) {
       setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
     } finally {
@@ -28,23 +34,23 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-900">
-      <div className="bg-gray-800 rounded-2xl shadow-2xl p-8 w-full max-w-md">
-        <h2 className="text-2xl font-bold text-white mb-6 text-center">Login to ChatHub</h2>
-        {error && <div className="mb-4 p-3 bg-red-500/10 border border-red-500 rounded-lg text-red-400 text-sm">{error}</div>}
+    <div className="min-h-screen flex items-center justify-center bg-[var(--background)]">
+      <div className="bg-[var(--card)] rounded-2xl shadow-2xl p-8 w-full max-w-md border border-[var(--border)]">
+        <h2 className="text-2xl font-bold text-foreground mb-6 text-center">Login to ChatHub</h2>
+        {error && <div className="mb-4 p-3 bg-[var(--destructive)]/10 border border-[var(--destructive)] rounded-lg text-[var(--destructive)] text-sm">{error}</div>}
         <form className="space-y-5" onSubmit={handleSubmit}>
           <div>
-            <label className="block text-gray-300 mb-1">Email</label>
-            <input name="email" type="email" value={formData.email} onChange={handleChange} className="w-full px-4 py-2 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter your email" required />
+            <label className="block text-muted-foreground mb-1">Email</label>
+            <input name="email" type="email" value={formData.email} onChange={handleChange} className="w-full px-4 py-2 rounded-lg bg-[var(--muted)] text-[var(--muted-foreground)] placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Enter your email" required />
           </div>
           <div>
-            <label className="block text-gray-300 mb-1">Password</label>
-            <input name="password" type="password" value={formData.password} onChange={handleChange} className="w-full px-4 py-2 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter your password" required />
+            <label className="block text-muted-foreground mb-1">Password</label>
+            <input name="password" type="password" value={formData.password} onChange={handleChange} className="w-full px-4 py-2 rounded-lg bg-[var(--muted)] text-[var(--muted-foreground)] placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Enter your password" required />
           </div>
-          <button type="submit" className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 rounded-lg transition disabled:opacity-60" disabled={loading}>{loading ? 'Logging in...' : 'Login'}</button>
+          <button type="submit" className="w-full bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-[var(--primary-foreground)] font-semibold py-2 rounded-lg transition disabled:opacity-60" disabled={loading}>{loading ? 'Logging in...' : 'Login'}</button>
         </form>
-        <div className="text-gray-400 text-sm mt-6 text-center">
-          Don&apos;t have an account? <a href="/signup" className="text-blue-400 hover:underline">Sign up</a>
+        <div className="text-muted-foreground text-sm mt-6 text-center">
+          Don&apos;t have an account? <Link to="/signup" className="text-[var(--primary)] hover:underline">Sign up</Link>
         </div>
       </div>
     </div>

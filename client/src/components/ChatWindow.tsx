@@ -331,12 +331,12 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
   };
 
   return (
-    <div className="flex-1 flex flex-col h-screen min-h-0 bg-gray-800 overflow-hidden rounded-2xl">
+    <div className="flex-1 flex flex-col h-screen min-h-0 bg-[var(--card)] text-[var(--foreground)] overflow-hidden rounded-2xl border border-[var(--border)]">
       {/* Chat header fixed below navbar */}
-      <div className="sticky top-20 z-30 bg-gray-900 px-6 py-4 flex items-center justify-between shadow-md border-b border-gray-800">
+      <div className="sticky top-20 z-30 bg-[var(--background)] px-6 py-4 flex items-center justify-between shadow-md border-b border-[var(--border)]">
         {/* Back button for mobile */}
         <button
-          className="md:hidden mr-3 text-white"
+          className="md:hidden mr-3 text-[var(--foreground)]"
           onClick={onBack}
           style={{ display: onBack ? undefined : 'none' }}
         >
@@ -347,7 +347,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
         <div className="flex items-center space-x-3 flex-1">
           <div
             className={
-              "w-10 h-10 bg-gradient-to-br from-gray-700 to-gray-800 rounded-full flex items-center justify-center text-base font-bold overflow-hidden" +
+              "w-10 h-10 bg-gradient-to-br from-[var(--sidebar-primary)] to-[var(--sidebar-accent)] rounded-full flex items-center justify-center text-base font-bold overflow-hidden" +
               ((isGroup && chat?.groupIcon) || (!isGroup && chat?.users?.find((u: any) => u._id !== user?._id)?.profilePicture)
                 ? " cursor-pointer hover:opacity-80"
                 : "")
@@ -382,12 +382,12 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
               )
             )}
           </div>
-          <span className="font-bold text-lg text-white truncate">{displayName}</span>
+          <span className="font-bold text-lg text-[var(--foreground)] truncate">{displayName}</span>
         </div>
         
         {isGroup && (
           <button
-            className="flex items-center text-blue-400 hover:text-blue-600 transition"
+            className="flex items-center text-[var(--primary)] hover:text-[var(--primary-foreground)] transition"
             onClick={() => setShowEditModal(true)}
             aria-label="Group options"
           >
@@ -399,14 +399,14 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
       <div className="flex-1 min-h-0 overflow-y-auto space-y-4 m-2 pt-20">
         {messages.length === 0 && (
           <div className="flex justify-center items-center h-full">
-            <div className="text-center text-gray-400 text-lg font-semibold">
+            <div className="text-center text-muted-foreground text-lg font-semibold">
               Welcome to ChatHub!<br />Here we give you privacy.<br />Write any message you want.
             </div>
           </div>
         )}
         {messages.length >=1 &&(
             <div className="flex justify-center">
-            <div className="text-center text-gray-400 text-lg font-semibold">
+            <div className="text-center text-muted-foreground text-lg font-semibold">
               Welcome to ChatHub!
             </div>
           </div>
@@ -446,13 +446,13 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-xs font-bold text-white">
+                        <div className="w-full h-full bg-gradient-to-br from-[var(--primary)] to-[var(--accent)] flex items-center justify-center text-xs font-bold text-[var(--primary-foreground)]">
                           {msg.sender?.username?.[0]?.toUpperCase() || 'U'}
                         </div>
                       )}
                     </div>
                     {/* Sender name */}
-                    <div className="text-xs text-gray-400 font-medium">
+                    <div className="text-xs text-muted-foreground font-medium">
                       {msg.sender?.username || 'Unknown User'}
                     </div>
                   </div>
@@ -462,7 +462,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
                   <img 
                     src={msg.mediaUrl} 
                     alt={msg.content || 'image'} 
-                    className="rounded-xl mb-1 max-h-60 object-contain bg-black cursor-pointer hover:opacity-80 transition-opacity" 
+                    className="rounded-xl mb-1 max-h-60 object-contain bg-[var(--background)] cursor-pointer hover:opacity-80 transition-opacity" 
                     style={{ maxWidth: '320px' }}
                     onClick={() => setSelectedMedia({ type: 'image', url: msg.mediaUrl, name: msg.content || 'Image' })}
                   />
@@ -476,7 +476,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
                         <img 
                           src={url} 
                           alt={`Image ${index + 1}`}
-                          className={`rounded-lg object-cover bg-black cursor-pointer hover:opacity-80 transition-opacity ${
+                          className={`rounded-lg object-cover bg-[var(--background)] cursor-pointer hover:opacity-80 transition-opacity ${
                             msg.mediaUrls.length === 1 ? 'col-span-2' : 
                             msg.mediaUrls.length === 2 ? 'h-32' : 'h-24'
                           }`}
@@ -498,14 +498,14 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
                   <video 
                     src={msg.mediaUrl} 
                     controls 
-                    className="rounded-xl mb-1 bg-black cursor-pointer hover:opacity-80 transition-opacity" 
+                    className="rounded-xl mb-1 bg-[var(--background)] cursor-pointer hover:opacity-80 transition-opacity" 
                     style={{ width: '320px', height: '180px', objectFit: 'cover' }}
                     onClick={() => setSelectedMedia({ type: 'video', url: msg.mediaUrl, name: msg.content || 'Video' })}
                   />
                 )}
                 {msg.messageType === 'file' && msg.mediaUrl && (
                   <div 
-                    className="text-blue-400 underline mb-1 break-all cursor-pointer hover:text-blue-300 transition-colors"
+                    className="text-[var(--primary)] underline mb-1 break-all cursor-pointer hover:text-[var(--primary-foreground)] transition-colors"
                     onClick={() => {
                       if (msg.content?.toLowerCase().includes('.pdf')) {
                         setSelectedMedia({ type: 'pdf', url: msg.mediaUrl, name: msg.content || 'PDF' });
@@ -520,8 +520,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
                 <div
                   className={`px-4 py-2 rounded-2xl shadow text-sm ${
                     msg.sender?._id === user?._id
-                      ? 'bg-blue-500 text-white rounded-br-none'
-                      : 'bg-gray-700 text-gray-100 rounded-bl-none'
+                      ? 'bg-[var(--primary)]/80 text-[var(--primary-foreground)] rounded-br-none'
+                      : 'bg-[var(--muted)] text-[var(--foreground)] rounded-bl-none'
                   } max-w-[80vw] break-words whitespace-pre-wrap`}
                 >
                   {/* Only show text if not a file-only message */}
@@ -530,8 +530,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
                   )}
                   <div className={`text-xs mt-1 text-right ${
                     msg.sender?._id === user?._id 
-                      ? 'text-blue-100' 
-                      : 'text-gray-300'
+                      ? 'text-[var(--primary-foreground)]/80' 
+                      : 'text-[var(--muted-foreground)]/80'
                   } flex items-center justify-end`}>
                     {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     {/* Read receipt ticks for my messages */}
@@ -546,15 +546,15 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
       </div>
       {/* Pending files preview */}
       {pendingFiles.length > 0 && (
-        <div className="bg-gray-900 px-4 py-2 border-t border-gray-800">
-          <div className="text-xs text-gray-400 mb-2">Pending files ({pendingFiles.length}):</div>
+        <div className="bg-[var(--background)] px-4 py-2 border-t border-[var(--border)]">
+          <div className="text-xs text-muted-foreground mb-2">Pending files ({pendingFiles.length}):</div>
           <div className="flex flex-wrap gap-2">
             {pendingFiles.map((file, index) => (
-              <div key={index} className="flex items-center bg-gray-800 rounded-lg px-3 py-1 text-sm">
-                <span className="text-white truncate max-w-32">{file.content}</span>
+              <div key={index} className="flex items-center bg-[var(--muted)] rounded-lg px-3 py-1 text-sm">
+                <span className="text-[var(--muted-foreground)] truncate max-w-32">{file.content}</span>
                 <button
                   onClick={() => removePendingFile(index)}
-                  className="ml-2 text-red-400 hover:text-red-600 text-lg font-bold"
+                  className="ml-2 text-[var(--destructive)] hover:text-[var(--destructive-foreground)] text-lg font-bold"
                 >
                   ×
                 </button>
@@ -564,7 +564,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
         </div>
       )}
       
-      <form onSubmit={handleSend} className="bg-gray-900 flex items-center space-x-2 px-2 py-2 rounded-b-2xl sticky bottom-0 z-20">
+      <form onSubmit={handleSend} className="bg-[var(--background)] flex items-center space-x-2 px-2 py-2 rounded-b-2xl sticky bottom-0 z-20">
         <input
           type="file"
           ref={fileInputRef}
@@ -575,19 +575,19 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
           multiple
         />
         <button
-          className="p-2 rounded-full hover:bg-gray-800 transition"
+          className="p-2 rounded-full hover:bg-[var(--muted)] transition"
           type="button"
           onClick={handleFileButtonClick}
           disabled={uploading}
           aria-label="Attach file"
         >
-          <FiPaperclip size={22} className="text-gray-400" />
+          <FiPaperclip size={22} className="text-muted-foreground" />
         </button>
         <textarea
           value={input}
           onChange={e => setInput(e.target.value)}
           placeholder={pendingFiles.length > 0 ? "Type your message or press Enter to send files..." : "Type your message..."}
-          className="flex-1 px-4 py-2 rounded-full bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition resize-none min-h-[40px] max-h-[40px] h-10 overflow-y-auto"
+          className="flex-1 px-4 py-2 rounded-full bg-[var(--muted)] text-[var(--muted-foreground)] placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition resize-none min-h-[40px] max-h-[40px] h-10 overflow-y-auto"
           disabled={uploading}
           onKeyDown={e => {
             if (e.key === 'Enter' && !e.shiftKey) {
@@ -598,29 +598,29 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
         />
         <button 
           className={`p-2 rounded-full transition flex items-center justify-center ${
-            (input.trim() || pendingFiles.length > 0) ? 'bg-blue-500 hover:bg-blue-600' : 'bg-gray-600 cursor-not-allowed'
+            (input.trim() || pendingFiles.length > 0) ? 'bg-[var(--primary)] hover:bg-[var(--primary)]/90' : 'bg-[var(--muted)] cursor-not-allowed'
           }`} 
           type="submit" 
           disabled={uploading || (!input.trim() && pendingFiles.length === 0)}
         >
-          <FiSend size={22} className="text-white" />
+          <FiSend size={22} className="text-[var(--primary-foreground)]" />
         </button>
-        {uploading && <span className="ml-2 text-blue-400 text-xs">Uploading...</span>}
-        {uploadError && <span className="ml-2 text-red-400 text-xs">{uploadError}</span>}
+        {uploading && <span className="ml-2 text-[var(--primary)] text-xs">Uploading...</span>}
+        {uploadError && <span className="ml-2 text-[var(--destructive)] text-xs">{uploadError}</span>}
       </form>
       {/* Edit group modal: admin can edit, others see members list */}
       {showEditModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
-          <div className="bg-gray-900 rounded-2xl shadow-2xl p-8 w-full max-w-md relative">
-            <button onClick={() => setShowEditModal(false)} className="absolute top-3 right-3 text-gray-400 hover:text-white text-xl">&times;</button>
-            <h2 className="text-xl font-bold text-white mb-4 text-center">Group Info</h2>
+          <div className="bg-[var(--background)] rounded-2xl shadow-2xl p-8 w-full max-w-md relative">
+            <button onClick={() => setShowEditModal(false)} className="absolute top-3 right-3 text-muted-foreground hover:text-foreground text-xl">&times;</button>
+            <h2 className="text-xl font-bold text-foreground mb-4 text-center">Group Info</h2>
             {isAdmin ? (
               <>
                 {/* Group Icon Section */}
                 <div className="mb-4">
-                  <label className="block text-gray-300 mb-2">Group Icon</label>
+                  <label className="block text-muted-foreground mb-2">Group Icon</label>
                   <div className="flex items-center space-x-4">
-                    <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-800 flex items-center justify-center">
+                    <div className="w-16 h-16 rounded-full overflow-hidden bg-[var(--muted)] flex items-center justify-center">
                       {editGroupIcon ? (
                         <img 
                           src={editGroupIcon} 
@@ -628,7 +628,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg">
+                        <div className="w-full h-full bg-gradient-to-br from-[var(--primary)] to-[var(--accent)] flex items-center justify-center text-[var(--primary-foreground)] font-bold text-lg">
                           {editGroupName?.[0]?.toUpperCase() || 'G'}
                         </div>
                       )}
@@ -644,7 +644,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
                       />
                       <label
                         htmlFor="groupIconInput"
-                        className="block w-full px-4 py-2 rounded-lg bg-gray-800 text-white text-center cursor-pointer hover:bg-gray-700 transition disabled:opacity-60"
+                        className="block w-full px-4 py-2 rounded-lg bg-[var(--muted)] text-[var(--muted-foreground)] text-center cursor-pointer hover:bg-[var(--muted-foreground)]/80 transition disabled:opacity-60"
                         style={{ pointerEvents: uploadingGroupIcon || editLoading ? 'none' : 'auto' }}
                       >
                         {uploadingGroupIcon ? 'Uploading...' : editGroupIcon ? 'Change Icon' : 'Upload Icon'}
@@ -653,21 +653,21 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
                   </div>
                 </div>
 
-                <label className="block text-gray-300 mb-1">Group Name</label>
+                <label className="block text-muted-foreground mb-1">Group Name</label>
                 <input
-                  className="w-full px-4 py-2 rounded-lg bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
+                  className="w-full px-4 py-2 rounded-lg bg-[var(--muted)] text-[var(--muted-foreground)] placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary mb-4"
                   value={editGroupName}
                   onChange={e => setEditGroupName(e.target.value)}
                   disabled={editLoading}
                 />
-                <div className="mb-2 text-gray-300 font-semibold">Members</div>
+                <div className="mb-2 text-muted-foreground font-semibold">Members</div>
                 <ul className="divide-y divide-gray-800 mb-4">
                   {editUsers.map((u: any) => (
                     <li key={u._id} className="py-2 flex items-center justify-between">
-                      <span className="text-white">{u.username} {u._id === (typeof chat?.groupAdmin === 'object' ? chat?.groupAdmin?._id : chat?.groupAdmin) && <span className='text-xs text-blue-400'>(admin)</span>}</span>
+                      <span className="text-foreground">{u.username} {u._id === (typeof chat?.groupAdmin === 'object' ? chat?.groupAdmin?._id : chat?.groupAdmin) && <span className='text-xs text-[var(--primary)]'>(admin)</span>}</span>
                       {u._id !== (typeof chat?.groupAdmin === 'object' ? chat?.groupAdmin?._id : chat?.groupAdmin) && (
                         <button
-                          className="text-xs text-red-400 hover:text-red-600 ml-2"
+                          className="text-xs text-[var(--destructive)] hover:text-[var(--destructive-foreground)] ml-2"
                           onClick={() => handleRemoveUser(u._id)}
                           disabled={editLoading || editUsers.length <= 1}
                         >Remove</button>
@@ -677,29 +677,29 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
                 </ul>
                 {/* Add member section */}
                 <div className="mb-4">
-                  <label className="block text-gray-300 mb-1">Add Member</label>
+                  <label className="block text-muted-foreground mb-1">Add Member</label>
                   <input
                     type="text"
                     value={search}
                     onChange={handleSearch}
-                    className="w-full px-4 py-2 rounded-lg bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2"
+                    className="w-full px-4 py-2 rounded-lg bg-[var(--muted)] text-[var(--muted-foreground)] placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary mb-2"
                     placeholder="Search users to add..."
                     disabled={editLoading}
                   />
-                  {searchLoading && <div className="text-gray-400 text-center mb-2">Searching...</div>}
-                  {searchError && <div className="text-red-400 text-center mb-2">{searchError}</div>}
+                  {searchLoading && <div className="text-muted-foreground text-center mb-2">Searching...</div>}
+                  {searchError && <div className="text-[var(--destructive)] text-center mb-2">{searchError}</div>}
                   <div className="max-h-32 overflow-y-auto">
                     {searchResults.map((u: any) => (
-                      <div key={u._id} className="flex items-center space-x-3 p-2 rounded-lg cursor-pointer hover:bg-gray-800 transition mb-1">
-                        <div className="w-8 h-8 bg-gradient-to-br from-gray-700 to-gray-800 rounded-full flex items-center justify-center text-base font-bold">
+                      <div key={u._id} className="flex items-center space-x-3 p-2 rounded-lg cursor-pointer hover:bg-[var(--muted)] transition mb-1">
+                        <div className="w-8 h-8 bg-gradient-to-br from-[var(--sidebar-primary)] to-[var(--sidebar-accent)] rounded-full flex items-center justify-center text-base font-bold">
                           {u.username?.[0]?.toUpperCase() || 'U'}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="font-semibold text-white truncate">{u.username}</div>
-                          <div className="text-xs text-gray-400 truncate">{u.email}</div>
+                          <div className="font-semibold text-foreground truncate">{u.username}</div>
+                          <div className="text-xs text-muted-foreground truncate">{u.email}</div>
                         </div>
                         <button
-                          className="bg-blue-500 text-white px-2 py-1 rounded-lg text-xs font-semibold hover:bg-blue-600 transition"
+                          className="bg-[var(--primary)] text-[var(--primary-foreground)] px-2 py-1 rounded-lg text-xs font-semibold hover:bg-[var(--primary-foreground)]/80 transition"
                           onClick={() => handleAddUser(u)}
                           disabled={editLoading}
                         >Add</button>
@@ -707,10 +707,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
                     ))}
                   </div>
                 </div>
-                {editError && <div className="text-red-400 text-center mb-2">{editError}</div>}
+                {editError && <div className="text-[var(--destructive)] text-center mb-2">{editError}</div>}
                 {editSuccess && <div className="text-green-400 text-center mb-2">{editSuccess}</div>}
                 <button
-                  className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 rounded-lg transition disabled:opacity-60"
+                  className="w-full bg-[var(--primary)] hover:bg-[var(--primary-foreground)] text-[var(--primary-foreground)] font-semibold py-2 rounded-lg transition disabled:opacity-60"
                   onClick={handleSaveGroup}
                   disabled={editLoading}
                 >
@@ -721,7 +721,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
               <ul className="divide-y divide-gray-800">
                 {chat?.users?.map((u: any) => (
                   <li key={u._id} className="py-2 flex items-center justify-between">
-                    <span className="text-white">{u.username} {u._id === chat?.groupAdmin && <span className='text-xs text-blue-400'>(admin)</span>}</span>
+                    <span className="text-foreground">{u.username} {u._id === chat?.groupAdmin && <span className='text-xs text-[var(--primary)]'>(admin)</span>}</span>
                   </li>
                 ))}
               </ul>
@@ -737,7 +737,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
             {/* Close button */}
             <button 
               onClick={() => setSelectedMedia(null)}
-              className="absolute top-4 right-4 z-10 text-white hover:text-gray-300 text-2xl font-bold bg-black/50 rounded-full w-10 h-10 flex items-center justify-center transition-colors"
+              className="absolute top-4 right-4 z-10 text-foreground hover:text-muted-foreground text-2xl font-bold bg-black/50 rounded-full w-10 h-10 flex items-center justify-center transition-colors"
             >
               ×
             </button>
