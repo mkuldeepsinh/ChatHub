@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 
 const Login = () => {
-  const [formData, setFormData] = useState({ email: '', password: '' });
+  const location = useLocation();
+  const prefillEmail = location.state?.email || '';
+  const prefillPhone = location.state?.phone || '';
+  const [formData, setFormData] = useState({ email: prefillEmail, password: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const { login, user } = useAuth();
@@ -14,6 +17,11 @@ const Login = () => {
       navigate('/chat');
     }
   }, [user, navigate]);
+
+  // If the user navigates to login with state, prefill the email field
+  useEffect(() => {
+    setFormData((prev) => ({ ...prev, email: prefillEmail }));
+  }, [prefillEmail]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });

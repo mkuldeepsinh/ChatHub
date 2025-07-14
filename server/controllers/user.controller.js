@@ -8,15 +8,21 @@ export const signup = async (req, res) => {
     try {
         const { username, email, phone, password } = req.body;
 
-        // check if user alredy exists
-
+        // check if user already exists by username, email, or phone
         const checkUser = await User.findOne({
-            $or: [{ email }, { username }]
+            $or: [{ email }, { username }, { phone }]
         });
         if (checkUser) {
-            return res.status(400).json({
-                msg: "Username or Email already exists"
-            });
+            if (checkUser.username === username) {
+                return res.status(400).json({ message: "Username already exists" });
+            }
+            if (checkUser.email === email) {
+                return res.status(400).json({ message: "Email already exists" });
+            }
+            if (checkUser.phone === phone) {
+                return res.status(400).json({ message: "Phone number already exists" });
+            }
+            return res.status(400).json({ message: "User already exists" });
         }
 
         // hash password
@@ -28,7 +34,6 @@ export const signup = async (req, res) => {
             phone,
             password: hashPassword,
         });
-
 
         //save user
         await newUser.save();

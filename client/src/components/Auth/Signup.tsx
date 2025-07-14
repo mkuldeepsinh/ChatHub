@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 
 const Signup = () => {
@@ -8,6 +8,7 @@ const Signup = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const { signup } = useAuth();
+  const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -30,8 +31,10 @@ const Signup = () => {
     }
     try {
       await signup({ username: formData.username, email: formData.email, phone: formData.phone, password: formData.password });
-      setSuccess('Signup successful! You can now log in.');
-      setFormData({ username: '', email: '', phone: '', password: '', confirmPassword: '' });
+      setSuccess('Signup successful! Redirecting to login...');
+      setTimeout(() => {
+        navigate('/login', { state: { email: formData.email, phone: formData.phone } });
+      }, 1200);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Signup failed. Please try again.');
     } finally {
