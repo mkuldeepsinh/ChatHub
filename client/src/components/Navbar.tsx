@@ -43,13 +43,13 @@ const Navbar: React.FC<NavbarProps> = ({ onChatCreated, onSelectChat }) => {
 
   return (
     <div className="w-full shadow-2xl transition-all duration-300 z-40 bg-background text-foreground border-b border-b-[var(--border)]">
-      <div className="flex items-center w-full h-20 px-4 sm:px-6 lg:px-8 gap-4">
+      <div className="flex items-center w-full h-20 px-2 sm:px-4 lg:px-8 gap-2 sm:gap-4">
         {/* Left: ChatHub */}
         <span className="text-2xl font-bold tracking-tight whitespace-nowrap text-foreground">ChatHub</span>
         {/* Spacer to push search bar to the right */}
         <div className="flex-1" />
-        {/* Search bar (smaller and more centered/right) */}
-        <div className="relative w-96 max-w-full">
+        {/* Search bar (responsive width) */}
+        <div className="relative w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl flex-shrink">
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
             <FiSearch size={18} />
           </span>
@@ -111,26 +111,26 @@ const Navbar: React.FC<NavbarProps> = ({ onChatCreated, onSelectChat }) => {
           )}
         </div>
         {/* New Chat Button */}
-        <Button variant="secondary" className="flex items-center space-x-2 font-medium shadow whitespace-nowrap" onClick={() => setShowNewChat(true)}>
+        <Button variant="secondary" className="flex items-center space-x-2 font-medium shadow whitespace-nowrap px-2 sm:px-4 py-1 sm:py-2" onClick={() => setShowNewChat(true)}>
           <FiPlus size={20} />
           <span className="hidden md:inline">New Chat</span>
         </Button>
         {/* New Group Button */}
-        <Button variant="outline" className="flex items-center space-x-2 font-medium shadow whitespace-nowrap" onClick={() => setShowNewGroup(true)}>
+        <Button variant="outline" className="flex items-center space-x-2 font-medium shadow whitespace-nowrap px-2 sm:px-4 py-1 sm:py-2" onClick={() => setShowNewGroup(true)}>
           <FiUsers size={20} />
           <span className="hidden md:inline">New Group</span>
         </Button>
         {/* Theme Toggle */}
         <Button
           variant="outline"
-          className="ml-2"
+          className="ml-1 sm:ml-2 px-2 sm:px-3 py-1 sm:py-2"
           onClick={() => setIsDark((prev) => !prev)}
           aria-label="Toggle theme"
         >
           {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
         </Button>
         {/* Profile */}
-        <div className="flex items-center space-x-2 cursor-pointer hover:bg-muted rounded-xl px-3 py-2 transition" onClick={() => setShowProfile(true)}>
+        <div className="flex items-center space-x-1 sm:space-x-2 cursor-pointer hover:bg-muted rounded-xl px-2 sm:px-3 py-1 sm:py-2 transition" onClick={() => setShowProfile(true)}>
           <Avatar className="w-10 h-10">
             {user?.profilePicture ? (
               <AvatarImage src={user.profilePicture} alt="Profile" />

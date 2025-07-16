@@ -1,8 +1,24 @@
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt"
 import { User } from "../models/user.model.js";
+import nodemailer from "nodemailer";
+import dotenv from "dotenv"
 
+dotenv.config();
 
+// In-memory store for email codes (for demo; use Redis/DB for production)
+const emailCodes = {};
+
+// console.log('EMAIL_USER:', process.env.EMAIL_USER, 'EMAIL_PASS:', process.env.EMAIL_PASS);
+
+// Configure nodemailer (use your real credentials in production)
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.EMAIL_USER, 
+        pass: process.env.EMAIL_PASS  
+    }
+});
 
 export const signup = async (req, res) => {
     try {
@@ -159,3 +175,51 @@ export const updateUser = async(req , res)=>{
         res.status(500).json({ message: "Internal server error" });
     }
 }
+
+export const sendVerificationCode = async (req, res) => {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ message: "Email is required" });
+    // Generate 4-digit code
+    const code = Math.floor(1000 + Math.random() * 9000).toString();
+    // Store code with expiry (5 min)
+    emailCodes[email] = { code, expires: Date.now() + 5 * 60 * 1000 };
+    // Send email
+    try {
+        await transporter.sendMail({
+            from: process.env.EMAIL_USER,
+            to: email,
+            subject: "Your Verification Code",
+            // text: `Your verification code is: ${code}`
+            html: `
+                <div style="font-family: Arial, sans-serif; text-align: center;">
+                  <h1 style="margin-bottom: 0.2em;">ChatHub</h1>
+                  <div style="font-size: 1em; color: #555; margin-bottom: 1em;">Your verification code</div>
+                  <h2 style="font-size: 2em; letter-spacing: 0.2em; margin: 0;">${code}</h2>
+                </div>
+            `
+        });
+        res.json({ message: "Verification code sent" });
+    } catch (err) {
+        console.error("Email send error:", err);
+        res.status(500).json({ message: "Failed to send email" });
+    }
+};
+
+export const verifyEmailCode = async (req, res) => {
+    const { email, code } = req.body;
+    const record = emailCodes[email];
+    if (!record) return res.status(400).json({ message: "No code sent to this email" });
+    if (record.expires < Date.now()) {
+        delete emailCodes[email];
+        return res.status(400).json({ message: "Code expired" });
+    }
+    if (record.code !== code) return res.status(400).json({ message: "Invalid code" });
+    // Optionally, mark user as verified if user exists
+    const user = await User.findOne({ email });
+    if (user) {
+        user.isEmailVerified = true;
+        await user.save();
+    }
+    delete emailCodes[email];
+    res.json({ message: "Email verified" });
+};

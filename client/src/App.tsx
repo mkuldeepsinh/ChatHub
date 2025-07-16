@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { AuthProvider } from './contexts/AuthContext';
 import Login from './components/Auth/Login';
 import Signup from './components/Auth/Signup';
 import Navbar from './components/Navbar';
@@ -10,13 +10,11 @@ import Sidebar from './components/Sidebar';
 import { ChatProvider, useChatContext } from './contexts/ChatContext';
 import ChatWindow from './components/ChatWindow';
 import { SocketProvider } from './contexts/SocketContext';
-import LoadingPage from './components/LoadingPage';
 import ProtectedRoute from './components/ProtectedRoute';
 
 // Chat Page Component (placeholder for now)
 const ChatPage: React.FC<{ onChatCreated: (id: string) => void; selectedChatId: string | null; setSelectedChatId: (id: string) => void; onSelectChat: (id: string) => void }> = ({  selectedChatId, setSelectedChatId, onSelectChat }) => {
-  const { setCurrentOpenChatId, chats } = useChatContext();
-  const { user } = useAuth();
+  const { setCurrentOpenChatId } = useChatContext();
 
   // Handler for selecting a chat
   const handleSelectChat = (id: string) => {
@@ -27,18 +25,6 @@ const ChatPage: React.FC<{ onChatCreated: (id: string) => void; selectedChatId: 
   React.useEffect(() => {
     setCurrentOpenChatId(selectedChatId);
   }, [selectedChatId, setCurrentOpenChatId]);
-
-  // Find the selected chat and receiver/group name
-  const selectedChat = chats.find((c) => c._id === selectedChatId);
-  let displayName = '';
-  if (selectedChat) {
-    if (selectedChat.isGroup) {
-      displayName = selectedChat.groupName;
-    } else if (Array.isArray(selectedChat.users)) {
-      const receiver = selectedChat.users.find((u: any) => u._id !== user?._id);
-      displayName = receiver?.username || 'Unknown User';
-    }
-  }
 
   // Sidebar with click handler for mobile
   const sidebar = (

@@ -5,7 +5,6 @@ import { useAuth } from '../../contexts/AuthContext';
 const Login = () => {
   const location = useLocation();
   const prefillEmail = location.state?.email || '';
-  const prefillPhone = location.state?.phone || '';
   const [formData, setFormData] = useState({ email: prefillEmail, password: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');

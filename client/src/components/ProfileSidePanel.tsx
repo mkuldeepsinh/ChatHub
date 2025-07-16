@@ -3,9 +3,6 @@ import { useAuth } from '../contexts/AuthContext';
 import { authAPI } from '../utils/api';
 import ImageCropModal from './ImageCropModal';
 
-const CLOUDINARY_CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
-const CLOUDINARY_UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
-
 interface ProfileSidePanelProps {
   open: boolean;
   onClose: () => void;
@@ -22,7 +19,6 @@ const ProfileSidePanel: React.FC<ProfileSidePanelProps> = ({ open, onClose }) =>
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
-  const [uploadingProfilePic, setUploadingProfilePic] = useState(false);
   const [profilePicError, setProfilePicError] = useState('');
   const [showCropModal, setShowCropModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -116,7 +112,6 @@ const ProfileSidePanel: React.FC<ProfileSidePanelProps> = ({ open, onClose }) =>
             style={{ display: 'none' }}
             accept="image/*"
             onChange={handleProfilePicChange}
-            disabled={uploadingProfilePic}
           />
           <div 
             className="relative cursor-pointer group"
@@ -135,7 +130,8 @@ const ProfileSidePanel: React.FC<ProfileSidePanelProps> = ({ open, onClose }) =>
             </div>
             <div className="absolute inset-0 bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
               <span className="text-foreground text-sm font-medium">
-                {uploadingProfilePic ? 'Uploading...' : 'Change'}
+                {/* {uploadingProfilePic ? 'Uploading...' : 'Change'} */}
+                Change
               </span>
             </div>
           </div>
@@ -179,7 +175,7 @@ const ProfileSidePanel: React.FC<ProfileSidePanelProps> = ({ open, onClose }) =>
         onCropSave={handleCropSave}
         title="Crop Profile Picture"
         selectedImage={selectedImage}
-        uploading={uploadingProfilePic}
+        uploading={false}
       />
     </div>
   );

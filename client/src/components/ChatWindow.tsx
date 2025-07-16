@@ -44,7 +44,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
   const [editLoading, setEditLoading] = useState(false);
   const [editError, setEditError] = useState('');
   const [editSuccess, setEditSuccess] = useState('');
-  const [uploadingGroupIcon, setUploadingGroupIcon] = useState(false);
   const [showGroupIconCropModal, setShowGroupIconCropModal] = useState(false);
   const [selectedGroupIconImage, setSelectedGroupIconImage] = useState<string | null>(null);
   const [search, setSearch] = useState('');
@@ -85,9 +84,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
       });
       
       const uploadedFiles = await Promise.all(uploadPromises);
-      
-      const images = uploadedFiles.filter(file => file.messageType === 'image');
-      const otherFiles = uploadedFiles.filter(file => file.messageType !== 'image');
       
       // Store uploaded files instead of sending them immediately
       setPendingFiles(prev => [...prev, ...uploadedFiles]);
@@ -640,14 +636,14 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
                         onChange={handleGroupIconUpload}
                         className="hidden"
                         id="groupIconInput"
-                        disabled={uploadingGroupIcon || editLoading}
+                        disabled={editLoading}
                       />
                       <label
                         htmlFor="groupIconInput"
                         className="block w-full px-4 py-2 rounded-lg bg-[var(--muted)] text-[var(--muted-foreground)] text-center cursor-pointer hover:bg-[var(--muted-foreground)]/80 transition disabled:opacity-60"
-                        style={{ pointerEvents: uploadingGroupIcon || editLoading ? 'none' : 'auto' }}
+                        style={{ pointerEvents: editLoading ? 'none' : 'auto' }}
                       >
-                        {uploadingGroupIcon ? 'Uploading...' : editGroupIcon ? 'Change Icon' : 'Upload Icon'}
+                        {editLoading ? 'Uploading...' : editGroupIcon ? 'Change Icon' : 'Upload Icon'}
                       </label>
                     </div>
                   </div>
@@ -787,7 +783,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
         onCropSave={handleGroupIconCropSave}
         title="Crop Group Icon"
         selectedImage={selectedGroupIconImage}
-        uploading={uploadingGroupIcon}
+        uploading={editLoading}
       />
 
       {/* Enlarged Profile/Group Image Modal */}

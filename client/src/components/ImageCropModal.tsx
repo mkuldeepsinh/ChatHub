@@ -197,7 +197,7 @@ const ImageCropModal: React.FC<ImageCropModalProps> = ({
         <div className="flex gap-3">
           <button 
             onClick={handleCropCancel}
-            className="flex-1 bg-[var(--muted)] hover:bg-[var(--muted-foreground)]/20 text-[var(--muted-foreground)] font-semibold py-2 rounded-lg transition"
+            className="flex-1 bg-[var(--muted)] hover:bg-[var(--primary)] hover:text-[var(--primary-foreground)] text-[var(--muted-foreground)] font-semibold py-2 rounded-lg transition"
           >
             Cancel
           </button>

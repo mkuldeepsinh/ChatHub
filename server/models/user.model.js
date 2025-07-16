@@ -43,6 +43,10 @@ const UserSchema = new Schema(
         ref: "User",
       }
     ],
+    isEmailVerified: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,

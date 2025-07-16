@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { chatAPI, authAPI } from '../utils/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useChatContext } from '../contexts/ChatContext';
@@ -22,15 +22,12 @@ const NewGroupModal: React.FC<NewGroupModalProps> = ({ open, onClose, onGroupCre
   const [selectedUsers, setSelectedUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [creating, setCreating] = useState(false);
-  const [uploadingIcon, setUploadingIcon] = useState(false);
+  const [uploadingIcon] = useState(false);
   const [showCropModal, setShowCropModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
   const { addOrUpdateChat } = useChatContext();
-
-  const CLOUDINARY_CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
-  const CLOUDINARY_UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
 
   const handleSearch = async (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value);
@@ -229,10 +226,10 @@ const NewGroupModal: React.FC<NewGroupModalProps> = ({ open, onClose, onGroupCre
           ))}
         </div>
         <Button
-          className="w-full font-semibold py-2"
+          className="w-full font-semibold py-2 hover:bg-green-600 hover:text-white"
           onClick={handleCreateGroup}
           disabled={creating}
-          variant="primary"
+          variant="default"
         >
           {creating ? 'Creating...' : 'Create Group'}
         </Button>

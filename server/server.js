@@ -59,6 +59,7 @@ function removeSocketFromAllChats(socketId) {
 
 // Helper: Emit to all sockets in a chat
 function emitToChat(chatId, event, data) {
+//   console.log(`[SOCKET.IO] Emitting ${event} to chat ${chatId} with data:`, data);
   if (chatRoomMap.has(chatId)) {
     for (const socketId of chatRoomMap.get(chatId)) {
       const s = io.sockets.sockets.get(socketId);
@@ -80,9 +81,9 @@ function deleteChatRoom(chatId) {
 
 // Listen for client connections
 io.on("connection", async (socket) => {
-    console.log("[SOCKET.IO] New connection attempt", socket.id, socket.handshake.auth);
+    // console.log("[SOCKET.IO] New connection attempt", socket.id, socket.handshake.auth);
     const token = socket.handshake.auth?.token || socket.handshake.query?.token;
-    console.log("[SOCKET.IO] Token received:", token);
+    // console.log("[SOCKET.IO] Token received:", token);
     // --- AUTHENTICATION ---
     if (!token) {
         socket.emit("error", "No token provided");
@@ -102,7 +103,7 @@ io.on("connection", async (socket) => {
         socket.disconnect(true);
         return;
     }
-    console.log(`[SOCKET.IO] User connected: ${user.username} (${socket.id})`);
+    // console.log(`[SOCKET.IO] User connected: ${user.username} (${socket.id})`);
 
     // --- JOIN CHAT ROOMS ---
     socket.on("join_chat", async (chatId) => {
@@ -123,7 +124,7 @@ io.on("connection", async (socket) => {
                 if (!chatRoomMap.has(chatId)) chatRoomMap.set(chatId, new Set());
                 chatRoomMap.get(chatId).add(socket.id);
                 socket.emit("joined_chat", chatId);
-                console.log(`User ${user.username} joined chat ${chatId}`);
+                // console.log(`User ${user.username} joined chat ${chatId}, socket: ${socket.id}`);
             } else {
                 socket.emit("error", "Cannot join chat");
             }
@@ -150,7 +151,7 @@ io.on("connection", async (socket) => {
 
     // --- SEND MESSAGE ---
     socket.on("send_message", async (data) => {
-        console.log("[SOCKET.IO] send_message event received", data, "from", socket.user?.username);
+        // console.log("[SOCKET.IO] send_message event received", data, "from", socket.user?.username);
         try {
             if (!data || typeof data !== "object") {
                 socket.emit("error", "Invalid message data");
@@ -230,15 +231,15 @@ io.on("connection", async (socket) => {
                 user.lastSeen = new Date();
                 await user.save();
             }
-            console.log(`[SOCKET.IO] User disconnected: ${user?.username} (${socket.id})`);
+            // console.log(`[SOCKET.IO] User disconnected: ${user?.username} (${socket.id})`);
         } catch (err) {
             // Ignore disconnect errors
         }
     });
 });
 
-console.log(process.env.PORT);
+// console.log(process.env.PORT);
 // Start the server using http.Server (not app.listen)
 server.listen(process.env.PORT, () => {
-    console.log("server start on " + process.env.PORT);
+    // console.log("server start on " + process.env.PORT);
 });

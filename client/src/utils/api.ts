@@ -36,6 +36,14 @@ export const authAPI = {
   updateUser: async (userData: any) => {
     const response = await api.put('/user/update', userData);
     return response.data;
+  },
+  sendVerificationCode: async (email: string) => {
+    const response = await api.post('/user/send-verification-code', { email });
+    return response.data;
+  },
+  verifyEmailCode: async (email: string, code: string) => {
+    const response = await api.post('/user/verify-code', { email, code });
+    return response.data;
   }
 };
 
