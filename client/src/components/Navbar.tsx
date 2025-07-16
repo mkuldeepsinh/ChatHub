@@ -44,8 +44,13 @@ const Navbar: React.FC<NavbarProps> = ({ onChatCreated, onSelectChat }) => {
   return (
     <div className="w-full shadow-2xl transition-all duration-300 z-40 bg-background text-foreground border-b border-b-[var(--border)]">
       <div className="flex items-center w-full h-20 px-2 sm:px-4 lg:px-8 gap-2 sm:gap-4">
-        {/* Left: ChatHub */}
-        <span className="text-2xl font-bold tracking-tight whitespace-nowrap text-foreground">ChatHub</span>
+        {/* Left: Logo + ChatHub */}
+        <img
+          src="/logo.png"
+          alt="ChatHub Logo"
+          className="w-12 h-12 rounded-full border-2 border-primary object-cover mr-2"
+        />
+        <span className="text-2xl font-bold tracking-tight whitespace-nowrap text-foreground hidden xs:inline sm:inline md:inline lg:inline xl:inline">ChatHub</span>
         {/* Spacer to push search bar to the right */}
         <div className="flex-1" />
         {/* Search bar (responsive width) */}
