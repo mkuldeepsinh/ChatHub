@@ -15,6 +15,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import { fileURLToPath } from "url";
 import path from "path";
+import fs from 'fs';
 
 dotenv.config();
 dbConnect();
@@ -40,12 +41,22 @@ if (process.env.NODE_ENV === 'production') {
   const __dirname = path.dirname(__filename);
 
   const staticPath = path.resolve(__dirname, '../client/dist');
+  const indexPath = path.join(staticPath, 'index.html');
   console.log('Serving static from:', staticPath);
-  console.log('Index.html path:', path.join(staticPath, 'index.html'));
+  console.log('Index.html path:', indexPath);
+
+  // Check if folder and file exist
+  if (!fs.existsSync(staticPath)) {
+    console.error('ERROR: Static folder does not exist:', staticPath);
+  }
+  if (!fs.existsSync(indexPath)) {
+    console.error('ERROR: index.html does not exist:', indexPath);
+  }
 
   app.use(express.static(staticPath));
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(staticPath, 'index.html'));
+  // Use regex catch-all for robustness
+  app.get(/^(?!\/api).*/, (req, res) => {
+    res.sendFile(indexPath);
   });
 }
 
