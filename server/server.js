@@ -39,9 +39,13 @@ if (process.env.NODE_ENV === 'production') {
   const __filename = fileURLToPath(import.meta.url);
   const __dirname = path.dirname(__filename);
 
-  app.use(express.static(path.join(__dirname, '../client/dist')));
+  const staticPath = path.resolve(__dirname, '../client/dist');
+  console.log('Serving static from:', staticPath);
+  console.log('Index.html path:', path.join(staticPath, 'index.html'));
+
+  app.use(express.static(staticPath));
   app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../client/dist', 'index.html'));
+    res.sendFile(path.join(staticPath, 'index.html'));
   });
 }
 
