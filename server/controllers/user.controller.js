@@ -82,13 +82,13 @@ export const login = async (req, res) => {
         //create token
         const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
         
-        // Set token in cookie (not httpOnly for dev, not secure for localhost)
+        // Set token in cookie with correct options for dev and production
         res.cookie('token', token, {
-            httpOnly: false, // <--- must be false for frontend JS to read it!
-            secure: false,   // <--- must be false for localhost (no https)
-            sameSite: 'lax', // or 'strict'
+            httpOnly: false, // must be false for frontend JS to read it!
+            secure: process.env.NODE_ENV === 'production', // true for HTTPS in production
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // 'none' for cross-site cookies in prod
             maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-            path: '/'
+            path: '/',
         });
 
         res.status(200).json({ 
